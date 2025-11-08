@@ -21,6 +21,8 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID_DEV }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID_DEV }}
           NEXT_PUBLIC_INVITE_ORPHANAGE_ADMIN_URL: ${{ secrets.NEXT_PUBLIC_INVITE_ORPHANAGE_ADMIN_URL_DEV }}
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
       - name: Deploy to Firebase Hosting
         run: firebase deploy --only hosting:dev --project orphancare-93b41
         env:
