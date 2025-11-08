@@ -26,6 +26,14 @@ import {
 import { BACKEND_ENDPOINTS } from "../lib/config";
 
 export default function OrphanagesPage() {
+  const MAX_FILE_SIZE_MB = 5;
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "application/pdf",
+  ];
+
   const [form, setForm] = useState<OrphanageForm>({
     name: "",
     contactName: "",
@@ -162,15 +170,30 @@ export default function OrphanagesPage() {
   };
 
   const handleFileUpload = async (file: File) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert("Only image or PDF files are allowed.");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      alert("File size must be under 5MB.");
+      return;
+    }
+
     setUploading(true);
-    const storageRef = ref(
-      storage,
-      `registrationDocs/${Date.now()}_${file.name}`
-    );
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    setForm((prev) => ({ ...prev, registrationDocUrl: url }));
-    setUploading(false);
+    try {
+      const storageRef = ref(
+        storage,
+        `registrationDocs/${Date.now()}_${file.name}`
+      );
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setForm((prev) => ({ ...prev, registrationDocUrl: url }));
+    } catch (err) {
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -226,7 +249,7 @@ export default function OrphanagesPage() {
                       </p>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.pdf"
                         ref={fileInputRef}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -239,14 +262,30 @@ export default function OrphanagesPage() {
                 </div>
               ))}
 
+              {uploading && (
+                <p className="text-sm text-gray-500 mb-2">
+                  Uploading document…
+                </p>
+              )}
+
               {form.registrationDocUrl && (
-                <Image
-                  src={form.registrationDocUrl}
-                  alt="Registration Document"
-                  fill
-                  className="object-contain mb-4"
-                  style={{ maxHeight: "16rem" }}
-                />
+                <div className="mb-4">
+                  {form.registrationDocUrl.endsWith(".pdf") ? (
+                    <iframe
+                      src={form.registrationDocUrl}
+                      title="PDF Preview"
+                      className="w-full h-64 border rounded"
+                    />
+                  ) : (
+                    <Image
+                      src={form.registrationDocUrl}
+                      alt="Registration Document"
+                      fill
+                      className="object-contain"
+                      style={{ maxHeight: "16rem" }}
+                    />
+                  )}
+                </div>
               )}
 
               <div className="mt-4">
@@ -270,13 +309,23 @@ export default function OrphanagesPage() {
                   <div className="text-sm text-gray-600">{o.email}</div>
                   <div className="text-sm text-gray-500">{o.status}</div>
                   {o.registrationDocUrl && (
-                    <Image
-                      src={o.registrationDocUrl}
-                      alt="Document"
-                      fill
-                      className="object-contain mt-2"
-                      style={{ maxHeight: "12rem" }}
-                    />
+                    <div className="mt-2">
+                      {o.registrationDocUrl.endsWith(".pdf") ? (
+                        <iframe
+                          src={o.registrationDocUrl}
+                          title="PDF Preview"
+                          className="w-full h-48 border rounded"
+                        />
+                      ) : (
+                        <Image
+                          src={o.registrationDocUrl}
+                          alt="Document"
+                          fill
+                          className="object-contain"
+                          style={{ maxHeight: "12rem" }}
+                        />
+                      )}
+                    </div>
                   )}
                   <button
                     className="text-blue-600 text-sm mt-2"
