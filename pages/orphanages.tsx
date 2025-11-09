@@ -190,6 +190,7 @@ export default function OrphanagesPage() {
       const url = await getDownloadURL(storageRef);
       setForm((prev) => ({ ...prev, registrationDocUrl: url }));
     } catch (err) {
+      console.error(err);
       alert("Upload failed. Please try again.");
     } finally {
       setUploading(false);
@@ -277,13 +278,12 @@ export default function OrphanagesPage() {
                       className="w-full max-w-[600px] h-64 border rounded"
                     />
                   ) : (
-                    <div className="relative w-full max-w-[300px] h-auto">
+                    <div className="relative w-full max-w-[300px] h-32">
                       <Image
                         src={form.registrationDocUrl}
                         alt="Registration Document"
                         fill
                         className="object-contain rounded shadow"
-                        style={{ maxHeight: "8rem" }}
                       />
                     </div>
                   )}
