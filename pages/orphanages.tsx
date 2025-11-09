@@ -269,21 +269,23 @@ export default function OrphanagesPage() {
               )}
 
               {form.registrationDocUrl && (
-                <div className="mb-4">
+                <div className="preview-container mb-4 flex justify-center">
                   {form.registrationDocUrl.endsWith(".pdf") ? (
                     <iframe
                       src={form.registrationDocUrl}
                       title="PDF Preview"
-                      className="w-full h-64 border rounded"
+                      className="w-full max-w-[600px] h-64 border rounded"
                     />
                   ) : (
-                    <Image
-                      src={form.registrationDocUrl}
-                      alt="Registration Document"
-                      fill
-                      className="object-contain"
-                      style={{ maxHeight: "16rem" }}
-                    />
+                    <div className="relative w-full max-w-[300px] h-auto">
+                      <Image
+                        src={form.registrationDocUrl}
+                        alt="Registration Document"
+                        fill
+                        className="object-contain rounded shadow"
+                        style={{ maxHeight: "8rem" }}
+                      />
+                    </div>
                   )}
                 </div>
               )}
