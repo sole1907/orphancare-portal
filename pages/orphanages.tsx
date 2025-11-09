@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db, storage } from "../lib/firebase";
 import {
   collection,
@@ -73,7 +73,7 @@ export default function OrphanagesPage() {
     registrationDocUrl: "Registration Document URL",
   };
 
-  const fetchOrphanages = useCallback(async () => {
+  const fetchOrphanages = async () => {
     const baseQuery = query(collection(db, "orphanages"), limit(10));
     const paginatedQuery = lastDoc
       ? query(baseQuery, startAfter(lastDoc))
@@ -87,13 +87,11 @@ export default function OrphanagesPage() {
     setList((prev) => [...prev, ...docs]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length === 10);
-  }, [lastDoc]);
+  };
 
   useEffect(() => {
-    void (async () => {
-      await fetchOrphanages();
-    })();
-  }, [fetchOrphanages]);
+    fetchOrphanages();
+  }, []);
 
   const validateForm = () => {
     const newErrors: Partial<Record<OrphanageFormField, boolean>> = {};
@@ -351,12 +349,14 @@ export default function OrphanagesPage() {
             </ul>
 
             {hasMore && (
-              <button
-                className="mt-6 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition"
-                onClick={fetchOrphanages}
-              >
-                Load More
-              </button>
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={fetchOrphanages}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Load More
+                </button>
+              </div>
             )}
           </main>
         </div>
