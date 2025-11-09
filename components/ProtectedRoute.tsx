@@ -23,7 +23,7 @@ export default function ProtectedRoute({
     ];
     const isPublic = publicRoutes.includes(router.pathname);
 
-    if (!loading && !user && !isPublic) {
+    if (!loading && !isPublic) {
       router.push("/");
     }
 
