@@ -16,13 +16,26 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.push("/");
+    const publicRoutes = [
+      "/complete-registration",
+      "/login",
+      "/forgot-password",
+    ];
+    const isPublic = publicRoutes.includes(router.pathname);
+
+    if (!loading && !user && !isPublic) {
+      router.push("/");
+    }
+
     if (
+      user &&
       allowedRoles &&
       typeof role === "string" &&
-      !allowedRoles.includes(role)
-    )
+      !allowedRoles.includes(role) &&
+      !isPublic
+    ) {
       router.push("/dashboard");
+    }
   }, [user, loading, role, allowedRoles, router]);
 
   return (
