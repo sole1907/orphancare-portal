@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useEffect } from "react";
+import { isPublicRoute } from "@/lib/routes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const [user, loading] = useAuthState(auth);
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && !isPublicRoute(router.pathname)) {
       user.getIdTokenResult().then((token) => {
         const claims = token.claims;
         if (claims.superAdmin || claims.orphanageAdmin)

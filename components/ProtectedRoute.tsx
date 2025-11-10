@@ -2,7 +2,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../lib/firebase";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useUserRole } from "../lib/role";
+import { useUserRole } from "@/lib/role";
+import { isPublicRoute } from "@/lib/routes";
 
 export default function ProtectedRoute({
   children,
@@ -16,14 +17,7 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    const publicRoutes = [
-      "/complete-registration",
-      "/login",
-      "/forgot-password",
-    ];
-    const isPublic = publicRoutes.includes(router.pathname);
-
-    if (isPublic) return; // ✅ Skip all redirects for public routes
+    if (isPublicRoute(router.pathname)) return;
 
     if (!loading && !user) {
       router.push("/");
