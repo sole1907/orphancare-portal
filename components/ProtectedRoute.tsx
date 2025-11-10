@@ -23,7 +23,9 @@ export default function ProtectedRoute({
     ];
     const isPublic = publicRoutes.includes(router.pathname);
 
-    if (!loading && !isPublic) {
+    if (isPublic) return; // ✅ Skip all redirects for public routes
+
+    if (!loading && !user) {
       router.push("/");
     }
 
@@ -31,8 +33,7 @@ export default function ProtectedRoute({
       user &&
       allowedRoles &&
       typeof role === "string" &&
-      !allowedRoles.includes(role) &&
-      !isPublic
+      !allowedRoles.includes(role)
     ) {
       router.push("/dashboard");
     }
