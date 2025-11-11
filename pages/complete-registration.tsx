@@ -18,6 +18,7 @@ export default function CompleteRegistration() {
 
   useEffect(() => {
     const storedEmail = window.localStorage.getItem("emailForSignIn");
+    console.log("Verifying email link with stored email:", storedEmail);
     if (storedEmail && isSignInWithEmailLink(auth, window.location.href)) {
       signInWithEmailLink(auth, storedEmail, window.location.href)
         .then(() => {
