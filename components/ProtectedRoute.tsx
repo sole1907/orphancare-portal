@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useUserRole } from "@/lib/role";
 import { isPublicRoute } from "@/lib/routes";
+import LoadingScreen from "./LoadingScreen";
 
 export default function ProtectedRoute({
   children,
@@ -22,10 +23,9 @@ export default function ProtectedRoute({
       return;
     }
 
-    if (!loading && !user) {
-      console.log("redirecting to home page");
-      router.push("/");
-    }
+    if (loading) return; // Wait until Firebase finishes loading
+
+    if (!user) router.push("/");
 
     if (
       user &&
@@ -33,17 +33,20 @@ export default function ProtectedRoute({
       typeof role === "string" &&
       !allowedRoles.includes(role)
     ) {
-      console.log("user is logged in, redirecting to dashboard");
       router.push("/dashboard");
     }
   }, [user, loading, role, allowedRoles, router]);
 
   return (
     <>
-      {user &&
+      {loading ? (
+        <LoadingScreen /> // or null, spinner, skeleton, etc.
+      ) : (
+        user &&
         (!allowedRoles ||
           (typeof role === "string" && allowedRoles.includes(role))) &&
-        children}
+        children
+      )}
     </>
   );
 }

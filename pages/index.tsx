@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [user, loading] = useAuthState(auth);
 
   useEffect(() => {
-    if (user && !loading && !isPublicRoute(router.pathname)) {
+    if (user && !loading) {
       user.getIdTokenResult().then((token) => {
         const claims = token.claims;
         if (claims.superAdmin || claims.orphanageAdmin)
