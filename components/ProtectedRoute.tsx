@@ -17,9 +17,13 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    if (isPublicRoute(router.pathname)) return;
+    if (isPublicRoute(router.pathname)) {
+      console.log("accessible public route");
+      return;
+    }
 
     if (!loading && !user) {
+      console.log("redirecting to home page");
       router.push("/");
     }
 
@@ -29,6 +33,7 @@ export default function ProtectedRoute({
       typeof role === "string" &&
       !allowedRoles.includes(role)
     ) {
+      console.log("user is logged in, redirecting to dashboard");
       router.push("/dashboard");
     }
   }, [user, loading, role, allowedRoles, router]);
