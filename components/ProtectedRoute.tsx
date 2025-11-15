@@ -18,6 +18,7 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
+    console.log("ProtectedRoute check for:", router.pathname);
     if (isPublicRoute(router.pathname)) {
       console.log("accessible public route");
       return;

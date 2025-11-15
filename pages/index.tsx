@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useEffect } from "react";
-import { isPublicRoute } from "@/lib/routes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

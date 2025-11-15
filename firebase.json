@@ -41,9 +41,13 @@
     }
   ],
   "hosting": {
-    "target": "dev",
-    "public": "out",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    "site": "orphancare-93b41",
+    "source": ".firebase/hosting",
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "nextjsFunc"
+      }
+    ]
   }
 }
