@@ -3,14 +3,5 @@
     "default": "orphancare-93b41",
     "orphancare": "orphancare-93b41"
   },
-  "targets": {
-    "orphancare-93b41": {
-      "hosting": {
-        "dev": [
-          "orphancare-93b41"
-        ]
-      }
-    }
-  },
   "etags": {}
 }
