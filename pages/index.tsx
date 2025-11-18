@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const [user, loading] = useAuthState(auth);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user && !loading) {
@@ -55,12 +57,26 @@ export default function LoginPage() {
           placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
         />
-        <input
-          className="w-full mb-2 p-2 border"
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="relative">
+          <input
+            className="w-full mb-2 p-2 border pr-10"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="h-5 w-5" />
+            ) : (
+              <EyeIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
         <button className="w-full bg-blue-600 text-white p-2" onClick={login}>
           Login
         </button>
