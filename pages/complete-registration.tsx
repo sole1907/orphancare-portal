@@ -17,12 +17,17 @@ export default function CompleteRegistration() {
   const [step, setStep] = useState<"verify" | "setPassword">("verify");
 
   useEffect(() => {
-    const storedEmail = window.localStorage.getItem("emailForSignIn");
-    console.log("Verifying email link with stored email:", storedEmail);
-    if (storedEmail && isSignInWithEmailLink(auth, window.location.href)) {
-      signInWithEmailLink(auth, storedEmail, window.location.href)
+    if (!router.isReady) return;
+
+    const emailFromQuery = router.query.email as string | undefined;
+    const link = window.location.href;
+
+    console.log("Verifying email link with query param:", emailFromQuery);
+
+    if (emailFromQuery && isSignInWithEmailLink(auth, link)) {
+      signInWithEmailLink(auth, emailFromQuery, link)
         .then(() => {
-          setEmail(storedEmail);
+          setEmail(emailFromQuery);
           setStep("setPassword");
         })
         .catch((err) => {
@@ -34,7 +39,7 @@ export default function CompleteRegistration() {
         setError("Missing email or invalid link");
       }, 0);
     }
-  }, []);
+  }, [router.isReady, router.query]);
 
   const isPasswordStrong = (pwd: string) => {
     return (
@@ -56,7 +61,6 @@ export default function CompleteRegistration() {
     try {
       await updatePassword(auth.currentUser!, password);
 
-      // Log registration completion
       await setDoc(doc(db, "registrations", auth.currentUser!.uid), {
         email,
         completedAt: serverTimestamp(),
