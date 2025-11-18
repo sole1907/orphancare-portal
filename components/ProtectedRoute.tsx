@@ -1,10 +1,10 @@
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../lib/firebase";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useUserRole } from "@/lib/role";
 import { isPublicRoute } from "@/lib/routes";
 import LoadingScreen from "./LoadingScreen";
+import { useSafeAuth } from "@/hooks/useSafeAuth";
 
 export default function ProtectedRoute({
   children,
@@ -13,6 +13,8 @@ export default function ProtectedRoute({
   children: React.ReactNode;
   allowedRoles?: string[];
 }) {
+  const auth = useSafeAuth();
+
   const [user, loading] = useAuthState(auth);
   const role = useUserRole();
   const router = useRouter();
@@ -41,7 +43,7 @@ export default function ProtectedRoute({
   return (
     <>
       {loading ? (
-        <LoadingScreen /> // or null, spinner, skeleton, etc.
+        <LoadingScreen />
       ) : (
         user &&
         (!allowedRoles ||

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { auth } from "./firebase";
+import { useSafeAuth } from "@/hooks/useSafeAuth";
 
 export function useUserRole() {
+  const auth = useSafeAuth();
+
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export function useUserRole() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   return role;
 }

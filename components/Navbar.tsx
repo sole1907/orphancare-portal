@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { auth } from "../lib/firebase";
 import { signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { useSafeAuth } from "@/hooks/useSafeAuth";
 
 export default function Navbar() {
+  const auth = useSafeAuth();
   const [user] = useAuthState(auth);
   const [menuOpen, setMenuOpen] = useState(false);
 

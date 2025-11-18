@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../lib/firebase";
 import { useEffect, useState } from "react";
 import { AuthClaims } from "../types/authClaims";
+import { useSafeAuth } from "@/hooks/useSafeAuth";
 
 export default function Sidebar() {
+  const auth = useSafeAuth();
+
   const [user] = useAuthState(auth);
   const [claims, setClaims] = useState<AuthClaims>({});
 
