@@ -27,11 +27,21 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/dashboard");
-    } catch (err: any) {
-      if (err.code === "auth/invalid-credential") {
-        setError("Invalid email or password.");
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        typeof (err as { code: unknown }).code === "string"
+      ) {
+        const code = (err as { code: string }).code;
+        if (code === "auth/invalid-credential") {
+          setError("Invalid email or password.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Unexpected error occurred.");
       }
     }
   };
