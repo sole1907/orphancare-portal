@@ -13,13 +13,9 @@ import { Payment } from "@/types/payment";
 import { Donor } from "@/types/donor";
 import { DateRange } from "@/types/filters";
 import { useCallback } from "react";
-import { useSafeAuth } from "@/hooks/useSafeAuth";
-import { useSafeDb } from "@/hooks/useSafeDb";
+import { auth, db } from "@/lib/firebase";
 
 export default function Dashboard() {
-  const auth = useSafeAuth();
-  const db = useSafeDb();
-
   const [range, setRange] = useState<DateRange>("30d");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [donors, setDonors] = useState<Donor[]>([]);
@@ -77,7 +73,7 @@ export default function Dashboard() {
     };
 
     void fetch();
-  }, [range, user, getStartDate, db]);
+  }, [range, user, getStartDate]);
 
   return (
     <ProtectedRoute allowedRoles={["superAdmin", "orphanageAdmin"]}>

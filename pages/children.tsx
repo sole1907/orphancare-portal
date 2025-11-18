@@ -4,11 +4,9 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { Child } from "@/types/child";
-import { useSafeDb } from "@/hooks/useSafeDb";
+import { db } from "@/lib/firebase";
 
 export default function ChildrenPage() {
-  const db = useSafeDb();
-
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [list, setList] = useState<Child[]>([]);

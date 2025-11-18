@@ -6,12 +6,9 @@ import {
   isSignInWithEmailLink,
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { useSafeDb } from "@/hooks/useSafeDb";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 
 export default function CompleteRegistration() {
-  const db = useSafeDb();
-
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +37,7 @@ export default function CompleteRegistration() {
         setError("Missing email or invalid link");
       }, 0);
     }
-  }, [router.isReady, router.query, router.asPath, auth]);
+  }, [router.isReady, router.query, router.asPath]);
 
   const isPasswordStrong = (pwd: string) => {
     return (
