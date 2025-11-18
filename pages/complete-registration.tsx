@@ -20,12 +20,10 @@ export default function CompleteRegistration() {
     if (!router.isReady) return;
 
     const emailFromQuery = router.query.email as string | undefined;
-    const link = window.location.href;
+    const fullLink = `${window.location.origin}${router.asPath}`;
 
-    console.log("Verifying email link with query param:", emailFromQuery);
-
-    if (emailFromQuery && isSignInWithEmailLink(auth, link)) {
-      signInWithEmailLink(auth, emailFromQuery, link)
+    if (emailFromQuery && isSignInWithEmailLink(auth, fullLink)) {
+      signInWithEmailLink(auth, emailFromQuery, fullLink)
         .then(() => {
           setEmail(emailFromQuery);
           setStep("setPassword");
@@ -39,7 +37,7 @@ export default function CompleteRegistration() {
         setError("Missing email or invalid link");
       }, 0);
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, router.asPath]);
 
   const isPasswordStrong = (pwd: string) => {
     return (
