@@ -1,13 +1,13 @@
 import { auth } from "../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useEffect } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
   const [user, loading] = useAuthState(auth);
 
@@ -17,14 +17,23 @@ export default function LoginPage() {
         const claims = token.claims;
         if (claims.superAdmin || claims.orphanageAdmin)
           router.replace("/dashboard");
-        else router.replace("/"); // fallback or donor dashboard
+        else router.replace("/");
       });
     }
   }, [user, loading, router]);
 
   const login = async () => {
-    await signInWithEmailAndPassword(auth, email, password);
-    router.push("/dashboard");
+    setError(""); // clear previous error
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/dashboard");
+    } catch (err: any) {
+      if (err.code === "auth/invalid-credential") {
+        setError("Invalid email or password.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    }
   };
 
   return (
@@ -37,7 +46,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          className="w-full mb-4 p-2 border"
+          className="w-full mb-2 p-2 border"
           type="password"
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
@@ -45,6 +54,9 @@ export default function LoginPage() {
         <button className="w-full bg-blue-600 text-white p-2" onClick={login}>
           Login
         </button>
+        {error && (
+          <p className="mt-3 text-sm text-red-600 text-center">{error}</p>
+        )}
       </div>
     </div>
   );
