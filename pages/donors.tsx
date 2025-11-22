@@ -22,7 +22,7 @@ export default function DonorsPage() {
     };
 
     void fetch();
-  }, [db]);
+  }, []);
 
   const filteredDonors = donors.filter((d) =>
     d.id.toLowerCase().includes(search.toLowerCase())

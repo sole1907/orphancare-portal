@@ -11,6 +11,10 @@ export interface Orphanage {
   status: string;
   createdAt?: Timestamp | FieldValue;
   registrationDocUrl?: string;
+  // Metrics
+  childrenCount?: number;
+  lastUpdate?: Timestamp;
+  fundingProgress?: number;
 }
 
 export interface EditOrphanageModalProps {

@@ -299,57 +299,97 @@ export default function OrphanagesPage() {
               </div>
             </div>
 
-            <ul className="space-y-2">
+            {/* Orphanage List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {list.map((o) => (
-                <li
+                <div
                   key={o.id}
-                  className="bg-white rounded shadow px-4 py-3 border"
+                  className="bg-white rounded shadow p-6 flex flex-col justify-between"
                 >
-                  <div className="font-semibold">{o.name}</div>
-                  <div className="text-sm text-gray-600">{o.email}</div>
-                  <div className="text-sm text-gray-500">{o.status}</div>
+                  {/* Donor-facing info */}
+                  <div>
+                    <h4 className="text-xl font-semibold mb-2">{o.name}</h4>
+                    <p className="text-sm text-gray-600 mb-1">{o.address}</p>
+                    <p className="text-sm text-gray-500 mb-1">
+                      Email: {o.email}
+                    </p>
+                    <span
+                      className={`inline-block px-2 py-1 text-xs rounded ${
+                        o.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {o.status}
+                    </span>
+                  </div>
+
+                  {/* Metrics section */}
+                  <div className="mt-3 space-y-1 text-sm text-gray-700">
+                    <p>Children supported: {o.childrenCount ?? "—"}</p>
+                    <p>
+                      Last update:{" "}
+                      {o.lastUpdate
+                        ? new Date(
+                            o.lastUpdate.seconds * 1000
+                          ).toLocaleDateString()
+                        : "—"}
+                    </p>
+                    <p>
+                      Funding progress:{" "}
+                      {o.fundingProgress ? `${o.fundingProgress}%` : "—"}
+                    </p>
+                  </div>
+
+                  {/* Optional document preview */}
                   {o.registrationDocUrl && (
-                    <div className="mt-2">
+                    <div className="mt-4">
                       {o.registrationDocUrl.endsWith(".pdf") ? (
                         <iframe
                           src={o.registrationDocUrl}
                           title="PDF Preview"
-                          className="w-full h-48 border rounded"
+                          className="w-full h-40 border rounded"
                         />
                       ) : (
-                        <Image
-                          src={o.registrationDocUrl}
-                          alt="Document"
-                          fill
-                          className="object-contain"
-                          style={{ maxHeight: "12rem" }}
-                        />
+                        <div className="relative w-full h-32">
+                          <Image
+                            src={o.registrationDocUrl}
+                            alt="Registration Document"
+                            fill
+                            className="object-contain rounded shadow"
+                          />
+                        </div>
                       )}
                     </div>
                   )}
-                  <button
-                    className="text-blue-600 text-sm mt-2"
-                    onClick={() => {
-                      setEditingId(o.id);
-                      setForm({
-                        name: o.name,
-                        contactName: o.contactName,
-                        email: o.email,
-                        phone: o.phone,
-                        address: o.address,
-                        registrationNumber: o.registrationNumber,
-                        registrationDocUrl: o.registrationDocUrl || "",
-                      });
-                    }}
-                  >
-                    Edit
-                  </button>
-                </li>
-              ))}
-            </ul>
 
+                  {/* Admin controls */}
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      className="text-primary hover:underline text-sm"
+                      onClick={() => {
+                        setEditingId(o.id);
+                        setForm({
+                          name: o.name,
+                          contactName: o.contactName,
+                          email: o.email,
+                          phone: o.phone,
+                          address: o.address,
+                          registrationNumber: o.registrationNumber,
+                          registrationDocUrl: o.registrationDocUrl || "",
+                        });
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Load More */}
             {hasMore && (
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-6">
                 <button
                   onClick={fetchOrphanages}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
