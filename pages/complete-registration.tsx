@@ -103,9 +103,9 @@ export default function CompleteRegistration() {
             <p className="mb-2 text-sm text-gray-600">
               Set a password for your Orphanage Admin account:
             </p>
-            <div className="relative">
+            <div className="flex items-center border border-gray-300 rounded mb-4">
               <input
-                className="border border-gray-300 rounded px-4 py-2 w-full mb-4 pr-10 leading-none"
+                className="px-4 py-2 w-full leading-none focus:outline-none"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
@@ -114,7 +114,7 @@ export default function CompleteRegistration() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-2 inset-y-0 flex items-center text-gray-600"
+                className="px-3 text-gray-600 flex items-center"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (

@@ -24,6 +24,7 @@ import {
 } from "@/types/orphanage";
 import { BACKEND_ENDPOINTS } from "@/lib/config";
 import { db, storage } from "@/lib/firebase";
+import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 
 export default function OrphanagesPage() {
   const MAX_FILE_SIZE_MB = 5;
@@ -300,29 +301,43 @@ export default function OrphanagesPage() {
             </div>
 
             {/* Orphanage List */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {list.map((o) => (
                 <div
                   key={o.id}
-                  className="bg-white rounded shadow p-6 flex flex-row items-start"
+                  className="bg-white rounded shadow p-6 flex flex-col xl:flex-row items-start"
                 >
                   {/* Left side: donor info + metrics */}
                   <div className="flex-1 pr-6">
-                    <h4 className="text-xl font-semibold mb-2">{o.name}</h4>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="text-xl font-semibold mb-2">{o.name}</h4>{" "}
+                      <span
+                        className={`inline-block px-2 py-1 text-xs rounded ${
+                          o.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {o.status}
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-600 mb-1">{o.address}</p>
-                    <p className="text-sm text-gray-500 mb-1">
-                      Email: {o.email}
-                    </p>
-                    <span
-                      className={`inline-block px-2 py-1 text-xs rounded ${
-                        o.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {o.status}
-                    </span>
-
+                    <div className="flex items-center gap-6 text-sm text-gray-600 mt-2">
+                      <a
+                        href={`tel:${o.phone}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <PhoneIcon className="h-4 w-4 text-gray-400" />
+                        {o.phone}
+                      </a>
+                      <a
+                        href={`mailto:${o.email}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                        {o.email}
+                      </a>
+                    </div>
                     {/* Metrics */}
                     <div className="mt-3 space-y-1 text-sm text-gray-700">
                       <p>Children supported: {o.childrenCount ?? "—"}</p>
@@ -339,7 +354,6 @@ export default function OrphanagesPage() {
                         {o.fundingProgress ? `${o.fundingProgress}%` : "—"}
                       </p>
                     </div>
-
                     {/* Admin controls */}
                     <div className="mt-4">
                       <button
@@ -364,7 +378,7 @@ export default function OrphanagesPage() {
 
                   {/* Right side: thumbnail */}
                   {o.registrationDocUrl && (
-                    <div className="w-48 h-48 flex-shrink-0">
+                    <div className="w-64 h-40 flex-shrink-0">
                       {o.registrationDocUrl.endsWith(".pdf") ? (
                         <iframe
                           src={o.registrationDocUrl}
