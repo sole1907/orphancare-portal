@@ -94,7 +94,7 @@ export default function CompleteRegistration() {
             </p>
             <div className="relative">
               <input
-                className="border border-gray-300 rounded px-4 py-2 w-full mb-4"
+                className="border border-gray-300 rounded px-4 py-2 w-full mb-4 pr-10 leading-none"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
@@ -103,7 +103,7 @@ export default function CompleteRegistration() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600"
+                className="absolute right-2 inset-y-0 flex items-center text-gray-600"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
