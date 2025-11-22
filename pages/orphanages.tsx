@@ -304,10 +304,10 @@ export default function OrphanagesPage() {
               {list.map((o) => (
                 <div
                   key={o.id}
-                  className="bg-white rounded shadow p-6 flex flex-col justify-between"
+                  className="bg-white rounded shadow p-6 flex flex-row justify-between items-start"
                 >
-                  {/* Donor-facing info */}
-                  <div>
+                  {/* Left side: donor info + metrics */}
+                  <div className="flex-1 pr-4">
                     <h4 className="text-xl font-semibold mb-2">{o.name}</h4>
                     <p className="text-sm text-gray-600 mb-1">{o.address}</p>
                     <p className="text-sm text-gray-500 mb-1">
@@ -322,67 +322,67 @@ export default function OrphanagesPage() {
                     >
                       {o.status}
                     </span>
-                  </div>
 
-                  {/* Metrics section */}
-                  <div className="mt-3 space-y-1 text-sm text-gray-700">
-                    <p>Children supported: {o.childrenCount ?? "—"}</p>
-                    <p>
-                      Last update:{" "}
-                      {o.lastUpdate
-                        ? new Date(
-                            o.lastUpdate.seconds * 1000
-                          ).toLocaleDateString()
-                        : "—"}
-                    </p>
-                    <p>
-                      Funding progress:{" "}
-                      {o.fundingProgress ? `${o.fundingProgress}%` : "—"}
-                    </p>
-                  </div>
+                    {/* Metrics */}
+                    <div className="mt-3 space-y-1 text-sm text-gray-700">
+                      <p>Children supported: {o.childrenCount ?? "—"}</p>
+                      <p>
+                        Last update:{" "}
+                        {o.lastUpdate
+                          ? new Date(
+                              o.lastUpdate.seconds * 1000
+                            ).toLocaleDateString()
+                          : "—"}
+                      </p>
+                      <p>
+                        Funding progress:{" "}
+                        {o.fundingProgress ? `${o.fundingProgress}%` : "—"}
+                      </p>
+                    </div>
 
-                  {/* Optional document preview */}
-                  {o.registrationDocUrl && (
+                    {/* Admin controls */}
                     <div className="mt-4">
+                      <button
+                        className="text-primary hover:underline text-sm"
+                        onClick={() => {
+                          setEditingId(o.id);
+                          setForm({
+                            name: o.name,
+                            contactName: o.contactName,
+                            email: o.email,
+                            phone: o.phone,
+                            address: o.address,
+                            registrationNumber: o.registrationNumber,
+                            registrationDocUrl: o.registrationDocUrl || "",
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right side: thumbnail/preview */}
+                  {o.registrationDocUrl && (
+                    <div className="w-32 h-32 flex-shrink-0">
                       {o.registrationDocUrl.endsWith(".pdf") ? (
                         <iframe
                           src={o.registrationDocUrl}
                           title="PDF Preview"
-                          className="w-full h-40 border rounded"
+                          className="w-full h-full border rounded"
                         />
                       ) : (
-                        <div className="relative w-full h-32">
+                        <div className="relative w-full h-full">
                           <Image
                             src={o.registrationDocUrl}
                             alt="Registration Document"
                             fill
-                            className="object-contain rounded shadow"
+                            className="object-cover rounded shadow"
                           />
                         </div>
                       )}
                     </div>
                   )}
-
-                  {/* Admin controls */}
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      className="text-primary hover:underline text-sm"
-                      onClick={() => {
-                        setEditingId(o.id);
-                        setForm({
-                          name: o.name,
-                          contactName: o.contactName,
-                          email: o.email,
-                          phone: o.phone,
-                          address: o.address,
-                          registrationNumber: o.registrationNumber,
-                          registrationDocUrl: o.registrationDocUrl || "",
-                        });
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </div>
                 </div>
               ))}
             </div>
