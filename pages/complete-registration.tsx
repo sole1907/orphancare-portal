@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function CompleteRegistration() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function CompleteRegistration() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [step, setStep] = useState<"verify" | "setPassword">("verify");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -90,13 +92,27 @@ export default function CompleteRegistration() {
             <p className="mb-2 text-sm text-gray-600">
               Set a password for your Orphanage Admin account:
             </p>
-            <input
-              type="password"
-              className="border border-gray-300 rounded px-4 py-2 w-full mb-4"
-              placeholder="Create password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                className="border border-gray-300 rounded px-4 py-2 w-full mb-4"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             <button
               className="bg-primary text-white px-4 py-2 rounded w-full"
               onClick={handlePasswordSubmit}
