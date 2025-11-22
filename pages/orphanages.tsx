@@ -300,14 +300,14 @@ export default function OrphanagesPage() {
             </div>
 
             {/* Orphanage List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {list.map((o) => (
                 <div
                   key={o.id}
-                  className="bg-white rounded shadow p-6 flex flex-row justify-between items-start"
+                  className="bg-white rounded shadow p-6 flex flex-row items-start"
                 >
                   {/* Left side: donor info + metrics */}
-                  <div className="flex-1 pr-4">
+                  <div className="flex-1 pr-6">
                     <h4 className="text-xl font-semibold mb-2">{o.name}</h4>
                     <p className="text-sm text-gray-600 mb-1">{o.address}</p>
                     <p className="text-sm text-gray-500 mb-1">
@@ -362,9 +362,9 @@ export default function OrphanagesPage() {
                     </div>
                   </div>
 
-                  {/* Right side: thumbnail/preview */}
+                  {/* Right side: thumbnail */}
                   {o.registrationDocUrl && (
-                    <div className="w-32 h-32 flex-shrink-0">
+                    <div className="w-48 h-48 flex-shrink-0">
                       {o.registrationDocUrl.endsWith(".pdf") ? (
                         <iframe
                           src={o.registrationDocUrl}

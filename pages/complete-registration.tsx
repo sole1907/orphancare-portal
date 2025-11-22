@@ -5,7 +5,7 @@ import {
   updatePassword,
   isSignInWithEmailLink,
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
@@ -66,6 +66,17 @@ export default function CompleteRegistration() {
         completedAt: serverTimestamp(),
         role: "orphanageAdmin",
       });
+
+      // also update orphanage status
+      if (router.query.orphanageId) {
+        await updateDoc(
+          doc(db, "orphanages", router.query.orphanageId as string),
+          {
+            status: "Active",
+            activatedAt: serverTimestamp(),
+          }
+        );
+      }
 
       setSuccess(true);
       setTimeout(() => router.push("/dashboard"), 3000);
