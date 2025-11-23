@@ -25,8 +25,12 @@ import {
 import { BACKEND_ENDPOINTS } from "@/lib/config";
 import { db, storage } from "@/lib/firebase";
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import dynamic from "next/dynamic";
 
 export default function OrphanagesPage() {
+  const PDFThumbnail = dynamic(() => import("../components/PDFThumbnail"), {
+    ssr: false,
+  });
   const MAX_FILE_SIZE_MB = 5;
   const ALLOWED_TYPES = [
     "image/jpeg",
@@ -129,8 +133,6 @@ export default function OrphanagesPage() {
     setLastDoc(null);
     fetchOrphanages();
 
-    // window.localStorage.setItem("emailForSignIn", form.email);
-
     await fetch(BACKEND_ENDPOINTS.inviteOrphanageAdmin, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -186,8 +188,14 @@ export default function OrphanagesPage() {
         `registrationDocs/${Date.now()}_${file.name}`
       );
       await uploadBytes(storageRef, file);
+
       const url = await getDownloadURL(storageRef);
-      setForm((prev) => ({ ...prev, registrationDocUrl: url }));
+
+      setForm((prev) => ({
+        ...prev,
+        registrationDocUrl: url,
+        registrationDocMimeType: file.type, // <-- store MIME type here
+      }));
     } catch (err) {
       console.error(err);
       alert("Upload failed. Please try again.");
@@ -270,14 +278,22 @@ export default function OrphanagesPage() {
 
               {form.registrationDocUrl && (
                 <div className="preview-container mb-4 flex justify-center">
-                  {form.registrationDocUrl.endsWith(".pdf") ? (
-                    <iframe
-                      src={form.registrationDocUrl}
-                      title="PDF Preview"
-                      className="w-full max-w-[600px] h-64 border rounded"
-                    />
+                  {form.registrationDocMimeType === "application/pdf" ? (
+                    <>
+                      <p>PDF</p>
+                      <PDFThumbnail url={form.registrationDocUrl} />
+                      <a
+                        href={form.registrationDocUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline text-sm mt-2 block"
+                      >
+                        View full PDF
+                      </a>
+                    </>
                   ) : (
                     <div className="relative w-full max-w-[300px] h-32">
+                      <p>Image</p>
                       <Image
                         src={form.registrationDocUrl}
                         alt="Registration Document"
@@ -379,14 +395,18 @@ export default function OrphanagesPage() {
                   {/* Right side: thumbnail */}
                   {o.registrationDocUrl && (
                     <div className="w-64 h-40 flex-shrink-0">
-                      {o.registrationDocUrl.endsWith(".pdf") ? (
-                        <iframe
-                          src={o.registrationDocUrl}
-                          title="PDF Preview"
-                          className="w-full h-full border rounded"
-                        />
+                      {o.registrationDocMimeType === "application/pdf" ? (
+                        <>
+                          <p>PDF</p>
+                          <iframe
+                            src={o.registrationDocUrl}
+                            title="PDF Preview"
+                            className="w-full h-full border rounded"
+                          />
+                        </>
                       ) : (
                         <div className="relative w-full h-full">
+                          <p>Image</p>
                           <Image
                             src={o.registrationDocUrl}
                             alt="Registration Document"

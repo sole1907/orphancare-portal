@@ -11,6 +11,7 @@ export interface Orphanage {
   status: string;
   createdAt?: Timestamp | FieldValue;
   registrationDocUrl?: string;
+  registrationDocMimeType?: string;
   // Metrics
   childrenCount?: number;
   lastUpdate?: Timestamp;
@@ -40,6 +41,7 @@ export type OrphanageForm = {
   address: string;
   registrationNumber: string;
   registrationDocUrl: string;
+  registrationDocMimeType?: string;
 };
 
 export type OrphanageFormField =
