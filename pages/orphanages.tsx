@@ -25,12 +25,9 @@ import {
 import { BACKEND_ENDPOINTS } from "@/lib/config";
 import { db, storage } from "@/lib/firebase";
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
-import dynamic from "next/dynamic";
+import PDFThumbnail from "@/components/PDFThumbnail";
 
 export default function OrphanagesPage() {
-  const PDFThumbnail = dynamic(() => import("../components/PDFThumbnail"), {
-    ssr: false,
-  });
   const MAX_FILE_SIZE_MB = 5;
   const ALLOWED_TYPES = [
     "image/jpeg",
@@ -280,16 +277,11 @@ export default function OrphanagesPage() {
                 <div className="preview-container mb-4 flex justify-center">
                   {form.registrationDocMimeType === "application/pdf" ? (
                     <>
-                      <p>PDF</p>
-                      <PDFThumbnail url={form.registrationDocUrl} />
-                      <a
-                        href={form.registrationDocUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline text-sm mt-2 block"
-                      >
-                        View full PDF
-                      </a>
+                      <PDFThumbnail
+                        url={form.registrationDocUrl}
+                        scale={0.3}
+                        className="inline-block border rounded p-1"
+                      />
                     </>
                   ) : (
                     <div className="relative w-full max-w-[300px] h-32">
@@ -397,23 +389,41 @@ export default function OrphanagesPage() {
                     <div className="w-64 h-40 flex-shrink-0">
                       {o.registrationDocMimeType === "application/pdf" ? (
                         <>
-                          <p>PDF</p>
-                          <iframe
-                            src={o.registrationDocUrl}
-                            title="PDF Preview"
-                            className="w-full h-full border rounded"
+                          <PDFThumbnail
+                            url={o.registrationDocUrl}
+                            scale={0.3}
+                            className="inline-block border rounded p-1"
                           />
+                          <a
+                            href={o.registrationDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline text-sm mt-2 block text-center"
+                          >
+                            View full PDF
+                          </a>
                         </>
                       ) : (
-                        <div className="relative w-full h-full">
-                          <p>Image</p>
-                          <Image
-                            src={o.registrationDocUrl}
-                            alt="Registration Document"
-                            fill
-                            className="object-cover rounded shadow"
-                          />
-                        </div>
+                        <>
+                          <div className="relative w-full">
+                            <Image
+                              src={o.registrationDocUrl}
+                              alt="Registration Document"
+                              className="object-contain rounded shadow w-full h-auto"
+                              width={0}
+                              height={0}
+                              sizes="100vw"
+                            />
+                          </div>
+                          <a
+                            href={o.registrationDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline text-sm mt-2 block text-center"
+                          >
+                            View full image
+                          </a>
+                        </>
                       )}
                     </div>
                   )}

@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["https://orphancare-93b41.web.app"],
+    "origin": ["https://orphancare-93b41.web.app", "http://localhost:3000"],
     "method": ["GET", "POST", "PUT", "DELETE"],
     "maxAgeSeconds": 3600
   }
