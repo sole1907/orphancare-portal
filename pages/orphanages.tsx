@@ -388,10 +388,10 @@ export default function OrphanagesPage() {
                   {o.registrationDocUrl && (
                     <div className="w-64 h-40 flex-shrink-0">
                       {o.registrationDocMimeType === "application/pdf" ? (
-                        <>
+                        <div className="text-center">
                           <PDFThumbnail
                             url={o.registrationDocUrl}
-                            scale={0.3}
+                            scale={0.2}
                             className="inline-block border rounded p-1"
                           />
                           <a
@@ -402,7 +402,7 @@ export default function OrphanagesPage() {
                           >
                             View full PDF
                           </a>
-                        </>
+                        </div>
                       ) : (
                         <>
                           <div className="relative w-full">
