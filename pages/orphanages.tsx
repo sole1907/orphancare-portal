@@ -285,7 +285,6 @@ export default function OrphanagesPage() {
                     </>
                   ) : (
                     <div className="relative w-full max-w-[300px] h-32">
-                      <p>Image</p>
                       <Image
                         src={form.registrationDocUrl}
                         alt="Registration Document"
