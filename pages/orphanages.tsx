@@ -52,6 +52,7 @@ export default function OrphanagesPage() {
   const [errors, setErrors] = useState<
     Partial<Record<OrphanageFormField, boolean>>
   >({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [list, setList] = useState<Orphanage[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lastDoc, setLastDoc] =
@@ -133,7 +134,8 @@ export default function OrphanagesPage() {
     );
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
-      throw new Error("An orphanage with this email already exists");
+      setErrorMessage("An orphanage with this email already exists");
+      return;
     }
 
     const newOrphanage: Omit<Orphanage, "id"> = {
@@ -152,6 +154,9 @@ export default function OrphanagesPage() {
       registrationNumber: "",
       registrationDocUrl: "",
     });
+
+    // clear error if successful
+    setErrorMessage(null);
 
     await fetch(BACKEND_ENDPOINTS.inviteOrphanageAdmin, {
       method: "POST",
@@ -239,6 +244,10 @@ export default function OrphanagesPage() {
                 <p className="text-red-500 text-sm mb-4">
                   Please fill in all required fields marked with *
                 </p>
+              )}
+
+              {errorMessage && (
+                <p className="text-red-600 text-sm mb-2">{errorMessage}</p>
               )}
 
               {fields.map((field) => (
