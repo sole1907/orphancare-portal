@@ -11,6 +11,9 @@ import {
   serverTimestamp,
   QueryDocumentSnapshot,
   DocumentData,
+  where,
+  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -92,7 +95,21 @@ export default function OrphanagesPage() {
   };
 
   useEffect(() => {
-    fetchOrphanages();
+    const q = query(
+      collection(db, "orphanages"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Orphanage, "id">),
+      }));
+      setList(docs);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length === 10);
+    });
+    return unsubscribe;
   }, []);
 
   const validateForm = () => {
@@ -110,6 +127,15 @@ export default function OrphanagesPage() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
+    const q = query(
+      collection(db, "orphanages"),
+      where("email", "==", form.email)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      throw new Error("An orphanage with this email already exists");
+    }
+
     const newOrphanage: Omit<Orphanage, "id"> = {
       ...form,
       createdAt: serverTimestamp(),
@@ -126,9 +152,6 @@ export default function OrphanagesPage() {
       registrationNumber: "",
       registrationDocUrl: "",
     });
-    setList([]);
-    setLastDoc(null);
-    fetchOrphanages();
 
     await fetch(BACKEND_ENDPOINTS.inviteOrphanageAdmin, {
       method: "POST",
@@ -150,9 +173,6 @@ export default function OrphanagesPage() {
       registrationNumber: "",
       registrationDocUrl: "",
     });
-    setList([]);
-    setLastDoc(null);
-    fetchOrphanages();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
