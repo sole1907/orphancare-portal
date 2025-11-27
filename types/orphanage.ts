@@ -16,6 +16,7 @@ export interface Orphanage {
   childrenCount?: number;
   lastUpdate?: Timestamp;
   fundingProgress?: number;
+  logoUrl?: string;
 }
 
 export interface EditOrphanageModalProps {
