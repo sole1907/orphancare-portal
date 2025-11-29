@@ -88,6 +88,9 @@ export default function ChildrenPage() {
     return unsubscribe;
   }, [isSuperAdmin, orphanageId]);
 
+  // simple in-memory cache
+  const orphanageCache: Record<string, string> = {};
+
   const fetchChildren = async () => {
     if (!hasMore || !lastDoc) return;
 
@@ -107,12 +110,31 @@ export default function ChildrenPage() {
 
     const snapshot = await getDocs(q);
 
-    const newDocs = snapshot.docs.map(
-      (doc) =>
-        ({
+    const newDocs = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data() as Omit<Child, "id">;
+
+        let orphanageName = "";
+        if (isSuperAdmin && data.orphanageId) {
+          // only fetch if super admin
+          if (orphanageCache[data.orphanageId]) {
+            orphanageName = orphanageCache[data.orphanageId];
+          } else {
+            const orphanageRef = doc(db, "orphanages", data.orphanageId);
+            const orphanageSnap = await getDoc(orphanageRef);
+            if (orphanageSnap.exists()) {
+              orphanageName = orphanageSnap.data().name || "";
+              orphanageCache[data.orphanageId] = orphanageName;
+            }
+          }
+        }
+
+        return {
           id: doc.id,
-          ...(doc.data() as Omit<Child, "id">),
-        } as Child)
+          ...data,
+          orphanageName, // empty for orphanage admins
+        } as Child & { orphanageName?: string };
+      })
     );
 
     setList((prev) => [...prev, ...newDocs]);
