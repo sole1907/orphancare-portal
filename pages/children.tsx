@@ -90,7 +90,6 @@ export default function ChildrenPage() {
   const saveChild = async () => {
     const newErrors: { [key: string]: boolean } = {
       name: !form.name,
-      age: !form.age,
       gender: !form.gender,
       birthday: !form.birthday,
       story: !form.story,
@@ -137,6 +136,17 @@ export default function ChildrenPage() {
     });
   };
 
+  const calculateAge = (birthday: string) => {
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   return (
     <ProtectedRoute allowedRoles={["superAdmin", "orphanageAdmin"]}>
       <div className="min-h-screen flex flex-col bg-background text-base">
@@ -160,18 +170,6 @@ export default function ChildrenPage() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className={`border rounded px-3 py-2 w-full ${
                   errors.name ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-
-              <input
-                placeholder="Age *"
-                type="number"
-                value={form.age || ""}
-                onChange={(e) =>
-                  setForm({ ...form, age: parseInt(e.target.value) })
-                }
-                className={`border rounded px-3 py-2 w-full ${
-                  errors.age ? "border-red-500" : "border-gray-300"
                 }`}
               />
 
@@ -322,7 +320,7 @@ export default function ChildrenPage() {
                   <div className="flex-1">
                     <h4 className="font-semibold">{c.name}</h4>
                     <p className="text-sm text-gray-600">
-                      Age {c.age} • {c.gender}
+                      {calculateAge(c.birthday)} years old {c.gender}
                     </p>
                     <p className="text-sm text-gray-600">
                       Birthday: {new Date(c.birthday).toLocaleDateString()}

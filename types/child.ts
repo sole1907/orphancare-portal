@@ -4,7 +4,6 @@ import { Timestamp } from "firebase/firestore";
 export interface Child {
   id: string;
   name: string;
-  age: number;
   gender: string;
   birthday: string; // ISO string
   orphanageId: string;
