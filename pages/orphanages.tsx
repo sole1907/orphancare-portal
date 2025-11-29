@@ -235,7 +235,7 @@ export default function OrphanagesPage() {
           <main className="flex-1 p-8">
             <h2 className="text-3xl font-bold mb-6">Orphanages</h2>
 
-            <div className="bg-white rounded shadow p-6 mb-8 max-w-3xl">
+            <div className="bg-white rounded shadow p-6 mb-8 max-w-4xl">
               <h3 className="text-lg font-semibold mb-4">
                 {editingId ? "Edit Orphanage" : "Add Orphanage"}
               </h3>
