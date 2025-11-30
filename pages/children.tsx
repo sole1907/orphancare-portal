@@ -61,6 +61,35 @@ export default function ChildrenPage() {
   const isSuperAdmin = claims?.["superAdmin"] === true;
   const orphanageId = claims?.["orphanageId"] as string | undefined;
 
+  // orphanageCache to avoid duplicate lookups
+  const orphanageCache = useRef<Record<string, string>>({});
+
+  async function enrichChildWithOrphanage(
+    childDoc: QueryDocumentSnapshot<DocumentData>
+  ): Promise<Child & { orphanageName?: string }> {
+    const data = childDoc.data() as Omit<Child, "id">;
+    let orphanageName = "";
+
+    if (isSuperAdmin && data.orphanageId) {
+      if (orphanageCache.current[data.orphanageId]) {
+        orphanageName = orphanageCache.current[data.orphanageId];
+      } else {
+        const orphanageRef = doc(db, "orphanages", data.orphanageId);
+        const orphanageSnap = await getDoc(orphanageRef);
+        if (orphanageSnap.exists()) {
+          orphanageName = orphanageSnap.data().name || "";
+          orphanageCache.current[data.orphanageId] = orphanageName;
+        }
+      }
+    }
+
+    return {
+      id: childDoc.id,
+      ...data,
+      orphanageName,
+    };
+  }
+
   useEffect(() => {
     if (!isSuperAdmin && !orphanageId) return;
 
@@ -74,23 +103,19 @@ export default function ChildrenPage() {
     const q = query(baseQuery, orderBy("createdAt", "desc"), limit(10));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...(doc.data() as Omit<Child, "id">),
-          } as Child)
-      );
-      setList(docs);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length === 10);
+      // wrap async work in inner function
+      (async () => {
+        const docs = await Promise.all(
+          snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc))
+        );
+        setList(docs);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+        setHasMore(snapshot.docs.length === 10);
+      })();
     });
 
     return unsubscribe;
   }, [isSuperAdmin, orphanageId]);
-
-  // simple in-memory cache
-  const orphanageCache: Record<string, string> = {};
 
   const fetchChildren = async () => {
     if (!hasMore || !lastDoc) return;
@@ -112,44 +137,13 @@ export default function ChildrenPage() {
     const snapshot = await getDocs(q);
 
     const newDocs = await Promise.all(
-      snapshot.docs.map(async (childDoc) => {
-        const data = childDoc.data() as Omit<Child, "id">;
-
-        let orphanageName = "";
-        if (isSuperAdmin && data.orphanageId) {
-          // only fetch if super admin
-          if (orphanageCache[data.orphanageId]) {
-            orphanageName = orphanageCache[data.orphanageId];
-          } else {
-            const orphanageRef = doc(db, "orphanages", data.orphanageId);
-            const orphanageSnap = await getDoc(orphanageRef);
-            if (orphanageSnap.exists()) {
-              orphanageName = orphanageSnap.data().name || "";
-              orphanageCache[data.orphanageId] = orphanageName;
-            }
-          }
-        }
-
-        return {
-          id: childDoc.id,
-          ...data,
-          orphanageName, // empty for orphanage admins
-        } as Child & { orphanageName?: string };
-      })
+      snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc))
     );
 
     setList((prev) => [...prev, ...newDocs]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length === 10);
   };
-
-  useEffect(() => {
-    if (!claims) return;
-    const run = async () => {
-      await fetchChildren();
-    };
-    run();
-  }, [claims]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
