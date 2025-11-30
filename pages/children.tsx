@@ -14,6 +14,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -111,8 +112,8 @@ export default function ChildrenPage() {
     const snapshot = await getDocs(q);
 
     const newDocs = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data() as Omit<Child, "id">;
+      snapshot.docs.map(async (childDoc) => {
+        const data = childDoc.data() as Omit<Child, "id">;
 
         let orphanageName = "";
         if (isSuperAdmin && data.orphanageId) {
@@ -130,7 +131,7 @@ export default function ChildrenPage() {
         }
 
         return {
-          id: doc.id,
+          id: childDoc.id,
           ...data,
           orphanageName, // empty for orphanage admins
         } as Child & { orphanageName?: string };
