@@ -14,12 +14,17 @@ import { Donor } from "@/types/donor";
 import { DateRange } from "@/types/filters";
 import { useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
+import { AuthClaims } from "@/types/authClaims";
+import { doc, getDoc } from "firebase/firestore";
+import { useRouter } from "next/router";
 
 export default function Dashboard() {
   const [range, setRange] = useState<DateRange>("30d");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [donors, setDonors] = useState<Donor[]>([]);
   const [user] = useAuthState(auth);
+  const [claims, setClaims] = useState<AuthClaims>({});
+  const [userHasSubaccount, setUserHasSubaccount] = useState(false);
 
   const getStartDate = useCallback(() => {
     const now = new Date();
@@ -29,10 +34,26 @@ export default function Dashboard() {
     return now;
   }, [range]);
 
+  const router = useRouter();
+
   useEffect(() => {
     const fetch = async () => {
       if (!user) return;
       const token = await user.getIdTokenResult();
+      setClaims(token.claims as AuthClaims);
+
+      if (
+        token.claims.orphanageId &&
+        typeof token.claims.orphanageId === "string"
+      ) {
+        const orphanageRef = doc(db, "orphanages", token.claims.orphanageId);
+        const orphanageDoc = await getDoc(orphanageRef);
+        if (orphanageDoc.exists()) {
+          const data = orphanageDoc.data();
+          setUserHasSubaccount(!!data.subaccountCode);
+        }
+      }
+
       const isSuperAdmin = token.claims.superAdmin;
       const orphanageId = token.claims.orphanageId;
       const startDate = getStartDate();
@@ -82,6 +103,20 @@ export default function Dashboard() {
         <div className="flex">
           <Sidebar />
           <main className="flex-1 p-8">
+            {!claims.superAdmin && !userHasSubaccount && (
+              <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">
+                <strong>Action Required:</strong> You have not set up your
+                payout account. Please{" "}
+                <button
+                  onClick={() => router.push("/account-details")}
+                  className="underline text-blue-600"
+                >
+                  add your bank details
+                </button>{" "}
+                to start receiving donations.
+              </div>
+            )}
+
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-base">Dashboard</h2>
               <DateFilter range={range} setRange={setRange} />
