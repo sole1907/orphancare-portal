@@ -159,7 +159,7 @@ export default function OrphanagesPage() {
     // clear error if successful
     setErrorMessage(null);
 
-    await fetch(BACKEND_ENDPOINTS.inviteOrphanageAdmin, {
+    await fetch(`${BACKEND_ENDPOINTS.apiUrl}/inviteOrphanageAdmin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: form.email, orphanageId: ref.id }),

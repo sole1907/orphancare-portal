@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { AuthClaims } from "../types/authClaims";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function SettingsPage() {
   const [user] = useAuthState(auth);
@@ -19,6 +20,19 @@ export default function SettingsPage() {
     };
     fetchClaims();
   }, [user]);
+
+  const refreshBanks = async () => {
+    try {
+      const res = await fetch(`${BACKEND_ENDPOINTS.apiUrl}/refreshBanks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await res.json();
+      alert(`Bank list refreshed: ${json.count} banks`);
+    } catch (err) {
+      alert("Failed to refresh bank list");
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["superAdmin", "orphanageAdmin"]}>
@@ -71,6 +85,22 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </Link>
+              )}
+
+              {/* Refresh Bank List Card (super admins only) */}
+              {claims.superAdmin && (
+                <div
+                  onClick={refreshBanks}
+                  className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition"
+                >
+                  <h3 className="text-xl font-semibold mb-2">
+                    Refresh Bank List
+                  </h3>
+                  <p className="text-gray-600">
+                    Update the list of Nigerian banks from Paystack. This
+                    ensures orphanage admins always see the latest options.
+                  </p>
+                </div>
               )}
 
               {/* Future cards: sponsor criteria, categories, etc. */}

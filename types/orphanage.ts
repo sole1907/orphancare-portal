@@ -18,9 +18,13 @@ export interface OrphanageData {
   registrationDocUrl?: string;
   registrationDocMimeType?: string;
   accountVerificationStatus?: VerificationStatus;
-  bankName?: string;
-  accountName?: string;
-  accountNumber?: string;
+
+  // Bank details
+  bankName?: string; // e.g. "Access Bank"
+  bankCode?: string; // e.g. "044"
+  accountName?: string; // e.g. "Orphanage Foundation"
+  accountNumber?: string; // e.g. "0123456789"
+
   // Metrics
   childrenCount?: number;
   lastUpdate?: Timestamp;
