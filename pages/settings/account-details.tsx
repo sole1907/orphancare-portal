@@ -1,3 +1,6 @@
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { useState } from "react";
@@ -26,28 +29,36 @@ export default function AccountDetailsPage() {
   };
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-4">Account Details</h2>
-      <input
-        type="text"
-        placeholder="Bank Name"
-        value={bankName}
-        onChange={(e) => setBankName(e.target.value)}
-        className="border p-2 mb-4 w-full"
-      />
-      <input
-        type="text"
-        placeholder="Account Number"
-        value={accountNumber}
-        onChange={(e) => setAccountNumber(e.target.value)}
-        className="border p-2 mb-4 w-full"
-      />
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        Submit
-      </button>
-    </div>
+    <ProtectedRoute allowedRoles={["orphanageAdmin"]}>
+      <div className="min-h-screen flex flex-col bg-background text-base">
+        <Navbar />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 p-8">
+            <h2 className="text-2xl font-bold mb-4">Account Details</h2>
+            <input
+              type="text"
+              placeholder="Bank Name"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              className="border p-2 mb-4 w-full"
+            />
+            <input
+              type="text"
+              placeholder="Account Number"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              className="border p-2 mb-4 w-full"
+            />
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Submit
+            </button>
+          </main>
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 }

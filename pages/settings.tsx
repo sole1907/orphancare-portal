@@ -58,6 +58,21 @@ export default function SettingsPage() {
                   </div>
                 </Link>
               )}
+
+              {claims.superAdmin && (
+                <Link href="/settings/action-center">
+                  <div className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition">
+                    <h3 className="text-xl font-semibold mb-2">
+                      Action Center
+                    </h3>
+                    <p className="text-gray-600">
+                      Review and approve pending actions such as orphanage
+                      account verifications.
+                    </p>
+                  </div>
+                </Link>
+              )}
+
               {/* Future cards: sponsor criteria, categories, etc. */}
             </div>
           </main>

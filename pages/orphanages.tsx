@@ -142,6 +142,7 @@ export default function OrphanagesPage() {
       ...form,
       createdAt: serverTimestamp(),
       status: "Pending",
+      accountVerificationStatus: "notSetup",
     };
 
     const ref = await addDoc(collection(db, "orphanages"), newOrphanage);
