@@ -51,26 +51,29 @@ export default function ActionCenterPage() {
               pendingAccounts.map((o) => (
                 <div
                   key={o.id}
-                  className="bg-white border p-4 mb-4 rounded shadow"
+                  className="bg-white border p-4 mb-4 rounded shadow max-w-lg"
                 >
-                  <p className="font-semibold">{o.name}</p>
-                  <p>Bank: {o.bankName}</p>
-                  <p>Account Name: {o.accountName}</p>
-                  <p>Account Number: ****{o.accountNumber?.slice(-4)}</p>
+                  {" "}
+                  <p className="font-semibold">{o.name}</p>{" "}
+                  <p>Bank: {o.bankName}</p> <p>Account Name: {o.accountName}</p>{" "}
+                  <p>Account Number: ****{o.accountNumber?.slice(-4)}</p>{" "}
                   <div className="mt-3 flex gap-3">
+                    {" "}
                     <button
                       onClick={() => approve(o.id)}
                       className="bg-green-600 text-white px-4 py-2 rounded"
                     >
-                      Approve
-                    </button>
+                      {" "}
+                      Approve{" "}
+                    </button>{" "}
                     <button
                       onClick={() => reject(o.id)}
                       className="bg-red-600 text-white px-4 py-2 rounded"
                     >
-                      Reject
-                    </button>
-                  </div>
+                      {" "}
+                      Reject{" "}
+                    </button>{" "}
+                  </div>{" "}
                 </div>
               ))
             )}
