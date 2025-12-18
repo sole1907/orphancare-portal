@@ -21,7 +21,7 @@ export default function SettingsPage() {
   }, [user]);
 
   return (
-    <ProtectedRoute allowedRoles={["superAdmin"]}>
+    <ProtectedRoute allowedRoles={["superAdmin", "orphanageAdmin"]}>
       <div className="min-h-screen flex flex-col bg-background text-base">
         <Navbar />
         <div className="flex">
