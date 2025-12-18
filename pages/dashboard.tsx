@@ -108,7 +108,7 @@ export default function Dashboard() {
                 <strong>Action Required:</strong> You have not set up your
                 payout account. Please{" "}
                 <button
-                  onClick={() => router.push("/account-details")}
+                  onClick={() => router.push("/settings/account-details")}
                   className="underline text-blue-600"
                 >
                   add your bank details

@@ -77,15 +77,13 @@ export default function Sidebar() {
             </div>
           </Link>
         </li>
-        {claims.superAdmin && (
-          <li>
-            <Link href="/settings">
-              <div className="px-4 py-2 hover:bg-gray-700 rounded cursor-pointer">
-                Settings
-              </div>
-            </Link>
-          </li>
-        )}
+        <li>
+          <Link href="/settings">
+            <div className="px-4 py-2 hover:bg-gray-700 rounded cursor-pointer">
+              Settings
+            </div>
+          </Link>
+        </li>
       </ul>
     </div>
   );
