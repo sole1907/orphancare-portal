@@ -26,7 +26,7 @@ import {
   OrphanageFormField,
 } from "@/types/orphanage";
 import { BACKEND_ENDPOINTS } from "@/lib/config";
-import { db, storage } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import PDFThumbnail from "@/components/PDFThumbnail";
 
@@ -158,10 +158,14 @@ export default function OrphanagesPage() {
 
     // clear error if successful
     setErrorMessage(null);
+    const idToken = await auth.currentUser?.getIdToken();
 
-    await fetch(`${BACKEND_ENDPOINTS.apiUrl}/inviteOrphanageAdmin`, {
+    await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/inviteOrphanageAdmin`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
       body: JSON.stringify({ email: form.email, orphanageId: ref.id }),
     });
   };

@@ -23,9 +23,14 @@ export default function SettingsPage() {
 
   const refreshBanks = async () => {
     try {
-      const res = await fetch(`${BACKEND_ENDPOINTS.apiUrl}/refreshBanks`, {
+      const idToken = await auth.currentUser?.getIdToken();
+
+      const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/refreshBanks`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
       });
       const json = await res.json();
       alert(`Bank list refreshed: ${json.count} banks`);
