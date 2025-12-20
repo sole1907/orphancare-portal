@@ -1,9 +1,10 @@
+// lib/proxyToFunction.ts
+import type { NextApiRequest, NextApiResponse } from "next";
 import { BACKEND_ENDPOINTS } from "./config";
 
-// lib/proxyToFunction.ts
 type ProxyOptions = {
-  req: any;
-  res: any;
+  req: NextApiRequest;
+  res: NextApiResponse;
   functionPath: string;
   method?: "POST" | "GET";
 };
@@ -13,7 +14,7 @@ export async function proxyToFunction({
   res,
   functionPath,
   method = "POST",
-}: ProxyOptions) {
+}: ProxyOptions): Promise<void> {
   const idToken = req.headers.authorization;
 
   try {

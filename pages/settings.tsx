@@ -6,7 +6,6 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { AuthClaims } from "../types/authClaims";
-import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function SettingsPage() {
   const [user] = useAuthState(auth);

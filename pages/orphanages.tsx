@@ -25,7 +25,6 @@ import {
   OrphanageForm,
   OrphanageFormField,
 } from "@/types/orphanage";
-import { BACKEND_ENDPOINTS } from "@/lib/config";
 import { auth, db, storage } from "@/lib/firebase";
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import PDFThumbnail from "@/components/PDFThumbnail";
