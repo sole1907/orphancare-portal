@@ -1,22 +1,6 @@
 {
   "hosting": {
     "site": "orphancare-93b41",
-    "source": ".",
-    "frameworksBackend": { "region": "us-central1" },
-    "headers": [
-      {
-        "source": "/api/**",
-        "headers": [
-          {
-            "key": "Access-Control-Allow-Headers",
-            "value": "Authorization, Content-Type"
-          },
-          {
-            "key": "Access-Control-Request-Headers",
-            "value": "Authorization, Content-Type"
-          }
-        ]
-      }
-    ]
+    "source": "."
   }
 }

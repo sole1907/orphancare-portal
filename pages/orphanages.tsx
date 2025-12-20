@@ -28,6 +28,7 @@ import {
 import { auth, db, storage } from "@/lib/firebase";
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 import PDFThumbnail from "@/components/PDFThumbnail";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function OrphanagesPage() {
   const MAX_FILE_SIZE_MB = 5;
@@ -159,10 +160,16 @@ export default function OrphanagesPage() {
     setErrorMessage(null);
     const idToken = await auth.currentUser?.getIdToken();
 
-    await fetch("/api/inviteOrphanageAdmin", {
+    await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/inviteOrphanageAdmin`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ email: form.email, orphanageId: ref.id }),
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: form.email,
+        orphanageId: ref.id,
+      }),
     });
   };
 

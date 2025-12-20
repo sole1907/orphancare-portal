@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { AuthClaims } from "../types/authClaims";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function SettingsPage() {
   const [user] = useAuthState(auth);
@@ -27,10 +28,11 @@ export default function SettingsPage() {
     try {
       const idToken = await auth.currentUser?.getIdToken();
 
-      const res = await fetch("/api/refreshBanks", {
+      const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/refreshBanks`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
         },
       });
 
