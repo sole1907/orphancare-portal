@@ -39,6 +39,7 @@ export default function SettingsPage() {
       const json = await res.json();
       alert(`Bank list refreshed: ${json.count} banks`);
     } catch (err) {
+      console.error("Refresh Banks error:", err);
       alert("Failed to refresh bank list");
     } finally {
       setIsRefreshing(false);
