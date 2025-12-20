@@ -28,13 +28,13 @@ export default function SettingsPage() {
     try {
       const idToken = await auth.currentUser?.getIdToken();
 
-      const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/refreshBanks`, {
+      const res = await fetch("/api/refreshBanks", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
       });
+
       const json = await res.json();
       alert(`Bank list refreshed: ${json.count} banks`);
     } catch (err) {

@@ -160,12 +160,9 @@ export default function OrphanagesPage() {
     setErrorMessage(null);
     const idToken = await auth.currentUser?.getIdToken();
 
-    await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/inviteOrphanageAdmin`, {
+    await fetch("/api/inviteOrphanageAdmin", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}`,
-      },
+      headers: { Authorization: `Bearer ${idToken}` },
       body: JSON.stringify({ email: form.email, orphanageId: ref.id }),
     });
   };
