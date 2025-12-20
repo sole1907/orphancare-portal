@@ -11,6 +11,8 @@ import { BACKEND_ENDPOINTS } from "@/lib/config";
 export default function SettingsPage() {
   const [user] = useAuthState(auth);
   const [claims, setClaims] = useState<AuthClaims>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     const fetchClaims = async () => {
       if (user) {
@@ -22,6 +24,7 @@ export default function SettingsPage() {
   }, [user]);
 
   const refreshBanks = async () => {
+    setIsRefreshing(true);
     try {
       const idToken = await auth.currentUser?.getIdToken();
 
@@ -36,6 +39,8 @@ export default function SettingsPage() {
       alert(`Bank list refreshed: ${json.count} banks`);
     } catch (err) {
       alert("Failed to refresh bank list");
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -98,12 +103,39 @@ export default function SettingsPage() {
                   onClick={refreshBanks}
                   className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition"
                 >
-                  <h3 className="text-xl font-semibold mb-2">
-                    Refresh Bank List
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xl font-semibold mb-2">
+                      {isRefreshing
+                        ? "Refreshing Bank List..."
+                        : "Refresh Bank List"}
+                    </h3>
+                    {isRefreshing && (
+                      <svg
+                        className="animate-spin h-5 w-5 text-blue-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        ></path>
+                      </svg>
+                    )}
+                  </div>
                   <p className="text-gray-600">
-                    Update the list of Nigerian banks from Paystack. This
-                    ensures orphanage admins always see the latest options.
+                    {isRefreshing
+                      ? "Please wait while we fetch the latest banks from Paystack."
+                      : "Update the list of Nigerian banks from Paystack. This ensures orphanage admins always see the latest options."}
                   </p>
                 </div>
               )}
