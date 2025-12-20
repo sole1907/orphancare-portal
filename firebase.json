@@ -2,11 +2,6 @@
   "hosting": {
     "site": "orphancare-93b41",
     "source": ".",
-    "rewrites": [
-      {
-        "source": "**",
-        "function": "nextjsFunc"
-      }
-    ]
+    "frameworksBackend": { "region": "us-central1" }
   }
 }
