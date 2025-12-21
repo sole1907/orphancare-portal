@@ -4,13 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  collection,
-  getDocs,
-} from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { Combobox, Transition } from "@headlessui/react";
 import { BACKEND_ENDPOINTS } from "@/lib/config";
 import { Orphanage } from "@/types/orphanage";
@@ -32,6 +26,7 @@ export default function AccountDetailsPage() {
   const [bankCode, setBankCode] = useState("");
 
   const [accountNumber, setAccountNumber] = useState("");
+  const [accountNumberMasked, setAccountNumberMasked] = useState("");
   const [accountName, setAccountName] = useState("");
 
   const [loading, setLoading] = useState(true);
@@ -45,6 +40,9 @@ export default function AccountDetailsPage() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [infoMessage, setInfoMessage] = useState("");
 
+  // NEW: Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+
   // Load orphanage details + bank list
   useEffect(() => {
     const fetchDetails = async () => {
@@ -57,8 +55,16 @@ export default function AccountDetailsPage() {
 
       if (orphanageSnap.exists()) {
         const data = orphanageSnap.data() as Orphanage;
+
         setBankName(data.bankName || "");
+        setBankCode(data.bankCode || "");
         setAccountName(data.accountName || "");
+
+        // NEW: Load masked account number
+        if (data.accountNumberMasked) {
+          setAccountNumberMasked(data.accountNumberMasked);
+          setAccountNumber(data.accountNumberMasked);
+        }
 
         if (data.accountVerificationStatus === "otp_pending") {
           setStep("otp");
@@ -103,6 +109,7 @@ export default function AccountDetailsPage() {
     const resolve = async () => {
       if (!user) return;
       if (!bankCode || accountNumber.length !== 10) return;
+      if (!isEditing) return; // NEW: Only resolve when editing
 
       setResolving(true);
       setError("");
@@ -142,7 +149,33 @@ export default function AccountDetailsPage() {
     };
 
     resolve();
-  }, [bankCode, accountNumber, user]);
+  }, [bankCode, accountNumber, user, isEditing]);
+
+  // NEW: Handle account number input (masked vs real)
+  const handleAccountNumberChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+
+    // If user starts typing over masked value, clear it
+    if (accountNumber === accountNumberMasked) {
+      setAccountNumber(raw);
+      return;
+    }
+
+    setAccountNumber(raw);
+  };
+
+  // NEW: Start editing
+  const startEditing = () => {
+    setIsEditing(true);
+    setAccountNumber(""); // clear masked value
+  };
+
+  // NEW: Cancel editing
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setAccountNumber(accountNumberMasked);
+    setError("");
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -184,6 +217,12 @@ export default function AccountDetailsPage() {
       alert(json.error || "Unable to submit account details");
       return;
     }
+
+    // NEW: Reset UI
+    setIsEditing(false);
+    setAccountNumberMasked("******" + accountNumber.slice(-4));
+    setAccountNumber("******" + accountNumber.slice(-4));
+
     setStep("otp");
     setInfoMessage(
       "Your account details have been saved. An OTP has been sent to your registered email. Please enter it below to complete verification."
@@ -240,8 +279,6 @@ export default function AccountDetailsPage() {
     }
   };
 
-  const isFormDisabled = step === "done";
-
   return (
     <ProtectedRoute allowedRoles={["orphanageAdmin"]}>
       <div className="min-h-screen flex flex-col bg-background text-base">
@@ -268,7 +305,7 @@ export default function AccountDetailsPage() {
                   <Combobox
                     value={bankName}
                     onChange={(value: string | null) => {
-                      if (isFormDisabled) return;
+                      if (!isEditing) return;
                       const name = value ?? "";
                       setBankName(name);
 
@@ -284,7 +321,7 @@ export default function AccountDetailsPage() {
                         }
                         displayValue={(value: string) => value}
                         placeholder="Search bank..."
-                        disabled={isFormDisabled}
+                        disabled={!isEditing}
                       />
 
                       <Transition
@@ -323,22 +360,22 @@ export default function AccountDetailsPage() {
                   <input
                     type="text"
                     value={accountNumber}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setAccountNumber(e.target.value.replace(/\D/g, ""))
-                    }
+                    onChange={handleAccountNumberChange}
                     maxLength={10}
                     className="border p-2 w-full"
                     placeholder="10-digit account number"
-                    disabled={isFormDisabled}
+                    disabled={!isEditing}
                   />
-                  {accountNumber.length > 0 && accountNumber.length !== 10 && (
-                    <p className="text-red-600 text-sm mt-1">
-                      Account number must be 10 digits
-                    </p>
-                  )}
+                  {isEditing &&
+                    accountNumber.length > 0 &&
+                    accountNumber.length !== 10 && (
+                      <p className="text-red-600 text-sm mt-1">
+                        Account number must be 10 digits
+                      </p>
+                    )}
                 </div>
 
-                {/* ACCOUNT NAME (AUTO-FILLED) */}
+                {/* ACCOUNT NAME */}
                 <div>
                   <label className="block font-semibold mb-2">
                     Account Name
@@ -359,15 +396,31 @@ export default function AccountDetailsPage() {
                   )}
                 </div>
 
-                {/* SUBMIT FORM BUTTON (only if not done) */}
-                {step !== "done" && (
+                {/* EDIT / SAVE / CANCEL BUTTONS */}
+                {step === "form" && !isEditing && (
                   <button
-                    onClick={handleSubmit}
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                    disabled={isFormDisabled}
+                    onClick={startEditing}
+                    className="bg-gray-700 text-white px-4 py-2 rounded"
                   >
-                    Save & Send OTP
+                    Edit Account Details
                   </button>
+                )}
+
+                {step === "form" && isEditing && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSubmit}
+                      className="bg-blue-600 text-white px-4 py-2 rounded"
+                    >
+                      Save & Send OTP
+                    </button>
+                    <button
+                      onClick={cancelEditing}
+                      className="bg-gray-400 text-white px-4 py-2 rounded"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
 
                 {/* OTP SECTION */}
