@@ -25,6 +25,7 @@ export interface OrphanageData {
   bankCode?: string; // e.g. "044"
   accountName?: string; // e.g. "Orphanage Foundation"
   accountNumber?: string; // e.g. "0123456789"
+  accountNumberMasked?: string; // e.g. "******6789"
 
   // Metrics
   childrenCount?: number;

@@ -56,7 +56,7 @@ export default function ActionCenterPage() {
                   {" "}
                   <p className="font-semibold">{o.name}</p>{" "}
                   <p>Bank: {o.bankName}</p> <p>Account Name: {o.accountName}</p>{" "}
-                  <p>Account Number: ****{o.accountNumber?.slice(-4)}</p>{" "}
+                  <p>Account Number: ****{o.accountNumberMasked}</p>{" "}
                   <div className="mt-3 flex gap-3">
                     {" "}
                     <button
