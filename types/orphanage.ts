@@ -1,6 +1,7 @@
 import { Timestamp, FieldValue } from "firebase/firestore";
 
 type VerificationStatus =
+  | "otp_pending" // orphanage yet to complete OTP verification
   | "notSetup" // orphanage registered but no bank details yet
   | "pending" // orphanage submitted bank details, awaiting super admin approval
   | "approved" // super admin approved

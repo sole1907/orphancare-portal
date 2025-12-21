@@ -1,18 +1,31 @@
+import React, { useEffect, useState, Fragment, ChangeEvent } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { useEffect, useState, Fragment } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { Combobox, Transition } from "@headlessui/react";
 import { BACKEND_ENDPOINTS } from "@/lib/config";
-import { collection, getDocs } from "firebase/firestore";
+import { Orphanage } from "@/types/orphanage";
+
+type Bank = {
+  name: string;
+  code: string;
+};
+
+type VerificationStep = "form" | "otp" | "done";
 
 export default function AccountDetailsPage() {
   const [user] = useAuthState(auth);
 
-  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [banks, setBanks] = useState<Bank[]>([]);
   const [query, setQuery] = useState("");
 
   const [bankName, setBankName] = useState("");
@@ -25,30 +38,51 @@ export default function AccountDetailsPage() {
   const [resolving, setResolving] = useState(false);
   const [error, setError] = useState("");
 
+  const [step, setStep] = useState<VerificationStep>("form");
+
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
+
   // Load orphanage details + bank list
   useEffect(() => {
     const fetchDetails = async () => {
       if (!user) return;
 
-      const token = await user.getIdTokenResult();
-      const orphanageId = token.claims.orphanageId as string;
+      const tokenResult = await user.getIdTokenResult();
+      const orphanageId = tokenResult.claims.orphanageId as string;
+      const orphanageRef = doc(db, "orphanages", orphanageId);
+      const orphanageSnap = await getDoc(orphanageRef);
 
-      // Load orphanage details
-      const ref = doc(db, "orphanages", orphanageId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
+      if (orphanageSnap.exists()) {
+        const data = orphanageSnap.data() as Orphanage;
         setBankName(data.bankName || "");
         setAccountName(data.accountName || "");
-        setAccountNumber(data.accountNumber || "");
+
+        if (data.accountVerificationStatus === "otp_pending") {
+          setStep("otp");
+          setInfoMessage(
+            "An OTP has been sent to your registered email. Please enter it below to verify your account details."
+          );
+        } else if (data.accountVerificationStatus === "pending") {
+          setStep("done");
+          setInfoMessage(
+            "Your account details have been submitted and will be reviewed by our support team. You’ll be notified once approved."
+          );
+        } else {
+          setStep("form");
+        }
       }
 
-      // Load bank list
-      // Load bank list
       const banksSnap = await getDocs(collection(db, "banks"));
-      const list = banksSnap.docs.map(
-        (d) => d.data() as { name: string; code: string }
-      );
+      const list: Bank[] = banksSnap.docs.map((d) => {
+        const bankData = d.data() as Bank;
+        return {
+          name: bankData.name as string,
+          code: bankData.code as string,
+        };
+      });
       setBanks(list);
 
       setLoading(false);
@@ -57,9 +91,8 @@ export default function AccountDetailsPage() {
     fetchDetails();
   }, [user]);
 
-  // Filter banks for search
   const filteredBanks =
-    query === ""
+    query.trim() === ""
       ? banks
       : banks.filter((bank) =>
           bank.name.toLowerCase().includes(query.toLowerCase())
@@ -68,13 +101,14 @@ export default function AccountDetailsPage() {
   // Auto-resolve account name when bank + account number are valid
   useEffect(() => {
     const resolve = async () => {
+      if (!user) return;
       if (!bankCode || accountNumber.length !== 10) return;
 
       setResolving(true);
       setError("");
 
       try {
-        const idToken = await user?.getIdToken();
+        const idToken = await user.getIdToken();
 
         const res = await fetch(
           `${BACKEND_ENDPOINTS.apiBaseUrl}/resolveAccount`,
@@ -128,20 +162,80 @@ export default function AccountDetailsPage() {
       return;
     }
 
-    const token = await user.getIdTokenResult();
-    const orphanageId = token.claims.orphanageId as string;
+    const tokenResult = await user.getIdTokenResult();
+    const orphanageId = tokenResult.claims.orphanageId as string;
     const ref = doc(db, "orphanages", orphanageId);
+    const last4 = accountNumber.slice(-4);
+    const masked = accountNumber.replace(/\d(?=\d{4})/g, "*");
 
     await updateDoc(ref, {
       bankName,
       bankCode,
       accountName,
-      accountNumber,
-      accountVerificationStatus: "pending",
+      accountNumberMasked: masked,
+      accountNumberLast4: last4,
+      accountVerificationStatus: "otp_pending",
     });
 
-    alert("Account details submitted for verification.");
+    setStep("otp");
+    setInfoMessage(
+      "Your account details have been saved. An OTP has been sent to your registered email. Please enter it below to complete verification."
+    );
+    setOtp("");
+    setOtpError("");
   };
+
+  const handleVerifyOtp = async () => {
+    if (!user) return;
+
+    if (!otp || otp.length < 4) {
+      setOtpError("Please enter the OTP sent to your email.");
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError("");
+
+    try {
+      const tokenResult = await user.getIdTokenResult();
+      const idToken = tokenResult.token;
+      const orphanageId = tokenResult.claims.orphanageId as string;
+
+      const res = await fetch(
+        `${BACKEND_ENDPOINTS.apiBaseUrl}/verifyAccountOtp`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orphanageId,
+            otp,
+          }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setOtpError(json.error || "Invalid or expired OTP.");
+        return;
+      }
+
+      setStep("done");
+      setInfoMessage(
+        "Your account details have been successfully submitted and will be reviewed by our support team. You’ll be notified once approved."
+      );
+    } catch (err) {
+      console.error("OTP verify error:", err);
+      setOtpError("Network error verifying OTP. Please try again.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const isFormDisabled = step === "done";
 
   return (
     <ProtectedRoute allowedRoles={["orphanageAdmin"]}>
@@ -151,6 +245,12 @@ export default function AccountDetailsPage() {
           <Sidebar />
           <main className="flex-1 p-8">
             <h2 className="text-3xl font-bold mb-6">Account Details</h2>
+
+            {infoMessage && (
+              <div className="mb-4 p-3 rounded bg-blue-50 text-blue-800 text-sm">
+                {infoMessage}
+              </div>
+            )}
 
             {loading ? (
               <p>Loading...</p>
@@ -163,6 +263,7 @@ export default function AccountDetailsPage() {
                   <Combobox
                     value={bankName}
                     onChange={(value: string | null) => {
+                      if (isFormDisabled) return;
                       const name = value ?? "";
                       setBankName(name);
 
@@ -173,9 +274,12 @@ export default function AccountDetailsPage() {
                     <div className="relative">
                       <Combobox.Input
                         className="border p-2 w-full"
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                          setQuery(e.target.value)
+                        }
                         displayValue={(value: string) => value}
                         placeholder="Search bank..."
+                        disabled={isFormDisabled}
                       />
 
                       <Transition
@@ -184,7 +288,7 @@ export default function AccountDetailsPage() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                       >
-                        <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto bg-white border rounded shadow">
+                        <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto bg-white border rounded shadow z-10">
                           {filteredBanks.length === 0 ? (
                             <div className="p-2 text-gray-500">
                               No banks found
@@ -214,12 +318,13 @@ export default function AccountDetailsPage() {
                   <input
                     type="text"
                     value={accountNumber}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setAccountNumber(e.target.value.replace(/\D/g, ""))
                     }
                     maxLength={10}
                     className="border p-2 w-full"
                     placeholder="10-digit account number"
+                    disabled={isFormDisabled}
                   />
                   {accountNumber.length > 0 && accountNumber.length !== 10 && (
                     <p className="text-red-600 text-sm mt-1">
@@ -249,13 +354,66 @@ export default function AccountDetailsPage() {
                   )}
                 </div>
 
-                {/* SUBMIT */}
-                <button
-                  onClick={handleSubmit}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Save & Submit for Verification
-                </button>
+                {/* SUBMIT FORM BUTTON (only if not done) */}
+                {step !== "done" && (
+                  <button
+                    onClick={handleSubmit}
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    disabled={isFormDisabled}
+                  >
+                    Save & Send OTP
+                  </button>
+                )}
+
+                {/* OTP SECTION */}
+                {step === "otp" && (
+                  <div className="border-t pt-4 space-y-3">
+                    <h3 className="font-semibold text-lg">
+                      Verify Your Account
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      We’ve sent a one-time password (OTP) to your registered
+                      email address. Please enter it below to confirm your bank
+                      account details.
+                    </p>
+
+                    <div>
+                      <label className="block font-semibold mb-2">
+                        OTP Code
+                      </label>
+                      <input
+                        type="text"
+                        value={otp}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                          setOtp(e.target.value.replace(/\D/g, ""));
+                          setOtpError("");
+                        }}
+                        maxLength={6}
+                        className="border p-2 w-full"
+                        placeholder="Enter 6-digit OTP"
+                      />
+                      {otpError && (
+                        <p className="text-red-600 text-sm mt-1">{otpError}</p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleVerifyOtp}
+                      className="bg-green-600 text-white px-4 py-2 rounded"
+                      disabled={otpLoading}
+                    >
+                      {otpLoading ? "Verifying..." : "Verify OTP"}
+                    </button>
+                  </div>
+                )}
+
+                {/* DONE STATE */}
+                {step === "done" && (
+                  <p className="text-sm text-green-700 bg-green-50 p-3 rounded">
+                    Your request has been submitted and will be reviewed by our
+                    support team. You’ll be notified once it’s approved.
+                  </p>
+                )}
               </div>
             )}
           </main>
