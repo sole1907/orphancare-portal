@@ -2,7 +2,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { Orphanage, OrphanageData } from "@/types/orphanage"; // <-- your interface
 import { BACKEND_ENDPOINTS } from "@/lib/config";
