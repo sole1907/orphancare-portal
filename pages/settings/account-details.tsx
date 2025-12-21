@@ -162,27 +162,32 @@ export default function AccountDetailsPage() {
       return;
     }
 
-    const tokenResult = await user.getIdTokenResult();
-    const orphanageId = tokenResult.claims.orphanageId as string;
-    const ref = doc(db, "orphanages", orphanageId);
-    const last4 = accountNumber.slice(-4);
-    const masked = accountNumber.replace(/\d(?=\d{4})/g, "*");
-
-    await updateDoc(ref, {
-      bankName,
-      bankCode,
-      accountName,
-      accountNumberMasked: masked,
-      accountNumberLast4: last4,
-      accountVerificationStatus: "otp_pending",
-    });
-
+    const idToken = await user.getIdToken();
+    const res = await fetch(
+      `${BACKEND_ENDPOINTS.apiBaseUrl}/submitAccountDetails`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bankName,
+          bankCode,
+          accountName,
+          accountNumber,
+        }),
+      }
+    );
+    const json = await res.json();
+    if (!res.ok) {
+      alert(json.error || "Unable to submit account details");
+      return;
+    }
     setStep("otp");
     setInfoMessage(
       "Your account details have been saved. An OTP has been sent to your registered email. Please enter it below to complete verification."
     );
-    setOtp("");
-    setOtpError("");
   };
 
   const handleVerifyOtp = async () => {
