@@ -9,6 +9,10 @@ import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function ActionCenterPage() {
   const [pendingAccounts, setPendingAccounts] = useState<Orphanage[]>([]);
+  const [loadingAcctId, setLoadingAcctId] = useState<string | null>(null);
+  const [loadingAcctAction, setLoadingAcctAction] = useState<
+    "approve" | "reject" | null
+  >(null);
 
   useEffect(() => {
     const fetchPending = async () => {
@@ -23,36 +27,53 @@ export default function ActionCenterPage() {
   }, []);
 
   const approveBankAccount = async (id: string) => {
-    const idToken = await auth.currentUser?.getIdToken();
+    setLoadingAcctId(id);
+    setLoadingAcctAction("approve");
 
-    const res = await fetch(
-      `${BACKEND_ENDPOINTS.apiBaseUrl}/approveOrphanageAccount`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ orphanageId: id }),
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+
+      const res = await fetch(
+        `${BACKEND_ENDPOINTS.apiBaseUrl}/approveOrphanageAccount`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ orphanageId: id }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        alert(json.error || "Unable to approve account");
+        return;
       }
-    );
 
-    const json = await res.json();
-
-    if (!res.ok) {
-      alert(json.error || "Unable to approve account");
-      return;
+      alert("Account approved and Paystack subaccount created.");
+      setPendingAccounts((prev) => prev.filter((o) => o.id !== id));
+    } finally {
+      setLoadingAcctId(null);
+      setLoadingAcctAction(null);
     }
-
-    alert("Account approved and Paystack subaccount created.");
-    setPendingAccounts((prev) => prev.filter((o) => o.id !== id));
   };
 
   const rejectBankAccount = async (id: string) => {
-    await updateDoc(doc(db, "orphanages", id), {
-      accountVerificationStatus: "rejected",
-    });
-    setPendingAccounts((prev) => prev.filter((o) => o.id !== id));
+    setLoadingAcctId(id);
+    setLoadingAcctAction("reject");
+
+    try {
+      await updateDoc(doc(db, "orphanages", id), {
+        accountVerificationStatus: "rejected",
+      });
+
+      setPendingAccounts((prev) => prev.filter((o) => o.id !== id));
+    } finally {
+      setLoadingAcctId(null);
+      setLoadingAcctAction(null);
+    }
   };
 
   return (
@@ -87,17 +108,33 @@ export default function ActionCenterPage() {
                       {" "}
                       <button
                         onClick={() => approveBankAccount(o.id)}
-                        className="bg-green-600 text-white px-4 py-2 rounded"
+                        disabled={loadingAcctId === o.id}
+                        className={`px-4 py-2 rounded text-white ${
+                          loadingAcctId === o.id &&
+                          loadingAcctAction === "approve"
+                            ? "bg-green-400 cursor-not-allowed"
+                            : "bg-green-600"
+                        }`}
                       >
-                        {" "}
-                        Approve{" "}
-                      </button>{" "}
+                        {loadingAcctId === o.id &&
+                        loadingAcctAction === "approve"
+                          ? "Approving..."
+                          : "Approve"}
+                      </button>
                       <button
                         onClick={() => rejectBankAccount(o.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded"
+                        disabled={loadingAcctId === o.id}
+                        className={`px-4 py-2 rounded text-white ${
+                          loadingAcctId === o.id &&
+                          loadingAcctAction === "reject"
+                            ? "bg-red-400 cursor-not-allowed"
+                            : "bg-red-600"
+                        }`}
                       >
-                        {" "}
-                        Reject{" "}
+                        {loadingAcctId === o.id &&
+                        loadingAcctAction === "reject"
+                          ? "Rejecting..."
+                          : "Reject"}
                       </button>{" "}
                     </div>{" "}
                   </div>
