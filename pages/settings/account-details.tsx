@@ -285,7 +285,7 @@ export default function AccountDetailsPage() {
 
   const renderStatusBadge = () => {
     const base = "inline-block px-3 py-1 rounded-full text-sm font-medium";
-
+    console.log("Verification Status:", verificationStatus);
     switch (verificationStatus) {
       case "approved":
         return (
@@ -325,10 +325,9 @@ export default function AccountDetailsPage() {
         <div className="flex">
           <Sidebar />
           <main className="flex-1 p-8">
-            <div className="flex items-center justify-between mb-6">
-              {" "}
-              <h2 className="text-3xl font-bold">Account Details</h2>{" "}
-              {renderStatusBadge()}{" "}
+            <div className="flex items-center gap-3 mb-6">
+              <h2 className="text-3xl font-bold">Account Details</h2>
+              {renderStatusBadge()}
             </div>
 
             {infoMessage && (
