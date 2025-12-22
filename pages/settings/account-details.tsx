@@ -28,6 +28,7 @@ export default function AccountDetailsPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountNumberMasked, setAccountNumberMasked] = useState("");
   const [accountName, setAccountName] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState<string>("");
 
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState(false);
@@ -59,6 +60,7 @@ export default function AccountDetailsPage() {
         setBankName(data.bankName || "");
         setBankCode(data.bankCode || "");
         setAccountName(data.accountName || "");
+        setVerificationStatus(data.accountVerificationStatus || "none");
 
         // NEW: Load masked account number
         if (data.accountNumberMasked) {
@@ -224,6 +226,7 @@ export default function AccountDetailsPage() {
     setAccountNumber("******" + accountNumber.slice(-4));
 
     setStep("otp");
+    setVerificationStatus("otp_pending");
     setInfoMessage(
       "Your account details have been saved. An OTP has been sent to your registered email. Please enter it below to complete verification."
     );
@@ -268,6 +271,7 @@ export default function AccountDetailsPage() {
       }
 
       setStep("done");
+      setVerificationStatus("pending");
       setInfoMessage(
         "Your account details have been successfully submitted and will be reviewed by our support team. You’ll be notified once approved."
       );
@@ -279,6 +283,41 @@ export default function AccountDetailsPage() {
     }
   };
 
+  const renderStatusBadge = () => {
+    const base = "inline-block px-3 py-1 rounded-full text-sm font-medium";
+
+    switch (verificationStatus) {
+      case "approved":
+        return (
+          <span className={`${base} bg-green-100 text-green-800`}>
+            Approved
+          </span>
+        );
+      case "pending":
+        return (
+          <span className={`${base} bg-yellow-100 text-yellow-800`}>
+            Pending Review
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className={`${base} bg-red-100 text-red-800`}>Rejected</span>
+        );
+      case "otp_pending":
+        return (
+          <span className={`${base} bg-blue-100 text-blue-800`}>
+            OTP Required
+          </span>
+        );
+      default:
+        return (
+          <span className={`${base} bg-gray-100 text-gray-800`}>
+            Not Submitted
+          </span>
+        );
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={["orphanageAdmin"]}>
       <div className="min-h-screen flex flex-col bg-background text-base">
@@ -286,7 +325,11 @@ export default function AccountDetailsPage() {
         <div className="flex">
           <Sidebar />
           <main className="flex-1 p-8">
-            <h2 className="text-3xl font-bold mb-6">Account Details</h2>
+            <div className="flex items-center justify-between mb-6">
+              {" "}
+              <h2 className="text-3xl font-bold">Account Details</h2>{" "}
+              {renderStatusBadge()}{" "}
+            </div>
 
             {infoMessage && (
               <div className="mb-4 p-3 rounded bg-blue-50 text-blue-800 text-sm">
