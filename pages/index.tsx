@@ -1,5 +1,6 @@
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -80,6 +81,14 @@ export default function LoginPage() {
         <button className="w-full bg-blue-600 text-white p-2" onClick={login}>
           Login
         </button>
+        <div className="mt-3 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-blue-600 hover:underline text-sm"
+          >
+            Forgot password?
+          </Link>
+        </div>
         {error && (
           <p className="mt-3 text-sm text-red-600 text-center">{error}</p>
         )}
