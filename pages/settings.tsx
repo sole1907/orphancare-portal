@@ -71,6 +71,19 @@ export default function SettingsPage() {
                 </Link>
               )}
 
+              {/* FAQ Management Card */}
+              {claims.superAdmin && (
+                <Link href="/settings/faqs">
+                  <div className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition">
+                    <h3 className="text-xl font-semibold mb-2">Manage FAQs</h3>
+                    <p className="text-gray-600">
+                      Add, edit, or delete frequently asked questions displayed
+                      to donors in the mobile app.
+                    </p>
+                  </div>
+                </Link>
+              )}
+
               {claims.orphanageAdmin && (
                 <Link href="/settings/account-details">
                   <div className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition">
