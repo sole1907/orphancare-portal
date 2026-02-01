@@ -64,9 +64,9 @@ export default function Sidebar() {
           </Link>
         </li>
         <li>
-          <Link href="/payments">
+          <Link href="/donations">
             <div className="px-4 py-2 hover:bg-gray-700 rounded cursor-pointer">
-              Payments
+              Donations
             </div>
           </Link>
         </li>
