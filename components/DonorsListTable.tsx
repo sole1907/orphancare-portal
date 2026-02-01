@@ -6,21 +6,6 @@ interface DonorsListTableProps {
   showEmail: boolean;
 }
 
-function formatInterval(interval: string): string {
-  switch (interval) {
-    case "daily":
-      return "/day";
-    case "monthly":
-      return "/mo";
-    case "quarterly":
-      return "/qtr";
-    case "yearly":
-      return "/yr";
-    default:
-      return "";
-  }
-}
-
 function formatDate(dateString: string | null): string {
   if (!dateString) return "-";
   return new Date(dateString).toLocaleDateString();
@@ -58,9 +43,6 @@ export default function DonorsListTable({
             <th className="px-4 py-3 text-left text-sm font-semibold">
               Last Donation
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">
-              Recurring Plan
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -86,49 +68,6 @@ export default function DonorsListTable({
               </td>
               <td className="px-4 py-2 text-sm text-gray-600">
                 {formatDate(donor.lastDonationAt)}
-              </td>
-              <td className="px-4 py-2 text-sm">
-                {donor.recurringPlan ? (
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      {donor.recurringPlan.amount.toLocaleString("en-NG", {
-                        style: "currency",
-                        currency: "NGN",
-                        minimumFractionDigits: 0,
-                      })}
-                      {formatInterval(donor.recurringPlan.interval)}
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      <p>
-                        Donation:{" "}
-                        {donor.recurringPlan.baseAmount.toLocaleString("en-NG", {
-                          style: "currency",
-                          currency: "NGN",
-                          minimumFractionDigits: 0,
-                        })}
-                      </p>
-                      <p>
-                        Tip:{" "}
-                        {donor.recurringPlan.tipAmount.toLocaleString("en-NG", {
-                          style: "currency",
-                          currency: "NGN",
-                          minimumFractionDigits: 0,
-                        })}
-                      </p>
-                      <p>
-                        Fee:{" "}
-                        {donor.recurringPlan.transactionFee.toLocaleString("en-NG", {
-                          style: "currency",
-                          currency: "NGN",
-                          minimumFractionDigits: 0,
-                        })}
-                      </p>
-                      <p>Next: {formatDate(donor.recurringPlan.nextChargeAt)}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <span className="text-gray-400">-</span>
-                )}
               </td>
             </tr>
           ))}

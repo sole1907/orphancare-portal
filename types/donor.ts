@@ -19,17 +19,6 @@ export interface TierPieChartProps {
 }
 
 // API types for donor list
-export interface RecurringPlanInfo {
-  planCode: string;
-  amount: number;
-  interval: "daily" | "monthly" | "quarterly" | "yearly";
-  nextChargeAt: string;
-  // Breakdown fields
-  baseAmount: number;
-  tipAmount: number;
-  transactionFee: number;
-}
-
 export interface DonorListItem {
   donorUid: string;
   name: string;
@@ -37,7 +26,6 @@ export interface DonorListItem {
   totalAmount: number;
   donationCount: number;
   lastDonationAt: string | null;
-  recurringPlan: RecurringPlanInfo | null;
 }
 
 export interface DonorsListResponse {
