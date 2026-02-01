@@ -30,6 +30,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "orphancare_backend"],
+  "exclude": ["node_modules"],
   "typeRoots": ["./src/types", "./node_modules/@types"]
 }
