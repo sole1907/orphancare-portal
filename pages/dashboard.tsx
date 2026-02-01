@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
@@ -8,93 +7,68 @@ import DateFilter from "@/components/DateFilter";
 import MetricCard from "@/components/MetricCard";
 import PaymentsChart from "@/components/PaymentsChart";
 import DonorGrowthChart from "@/components/DonorGrowthChart";
-import TierPieChart from "@/components/TierPieChart";
-import { Payment } from "@/types/payment";
-import { Donor } from "@/types/donor";
+import TopDonorsTable from "@/components/TopDonorsTable";
+import TopOrphanagesTable from "@/components/TopOrphanagesTable";
 import { DateRange } from "@/types/filters";
-import { useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
 import { AuthClaims } from "@/types/authClaims";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/router";
+import { fetchDashboardStats } from "@/lib/dashboardApi";
+import { DashboardStats } from "@/types/dashboard";
 
 export default function Dashboard() {
   const [range, setRange] = useState<DateRange>("30d");
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const [claims, setClaims] = useState<AuthClaims>({});
   const [userHasSubaccount, setUserHasSubaccount] = useState(false);
 
-  const getStartDate = useCallback(() => {
-    const now = new Date();
-    if (range === "7d") now.setDate(now.getDate() - 7);
-    else if (range === "30d") now.setDate(now.getDate() - 30);
-    else if (range === "year") now.setFullYear(now.getFullYear() - 1);
-    return now;
-  }, [range]);
-
   const router = useRouter();
 
   useEffect(() => {
-    const fetch = async () => {
+    const loadData = async () => {
       if (!user) return;
-      const token = await user.getIdTokenResult();
-      setClaims(token.claims as AuthClaims);
 
-      if (
-        token.claims.orphanageId &&
-        typeof token.claims.orphanageId === "string"
-      ) {
-        const orphanageRef = doc(db, "orphanages", token.claims.orphanageId);
-        const orphanageDoc = await getDoc(orphanageRef);
-        if (orphanageDoc.exists()) {
-          const data = orphanageDoc.data();
-          setUserHasSubaccount(!!data.subaccountCode);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = await user.getIdTokenResult();
+        setClaims(token.claims as AuthClaims);
+
+        // Check orphanage subaccount status for orphanageAdmin
+        if (
+          token.claims.orphanageId &&
+          typeof token.claims.orphanageId === "string"
+        ) {
+          const orphanageRef = doc(db, "orphanages", token.claims.orphanageId);
+          const orphanageDoc = await getDoc(orphanageRef);
+          if (orphanageDoc.exists()) {
+            const data = orphanageDoc.data();
+            setUserHasSubaccount(!!data.subaccountCode);
+          }
         }
+
+        // Fetch dashboard stats from API
+        const orphanageId = token.claims.orphanageAdmin
+          ? (token.claims.orphanageId as string)
+          : undefined;
+
+        const dashboardData = await fetchDashboardStats(range, orphanageId);
+        setStats(dashboardData);
+      } catch (err) {
+        console.error("Failed to load dashboard:", err);
+        setError("Failed to load dashboard data. Please try again.");
+      } finally {
+        setLoading(false);
       }
-
-      const isSuperAdmin = token.claims.superAdmin;
-      const orphanageId = token.claims.orphanageId;
-      const startDate = getStartDate();
-
-      const paymentsQuery = isSuperAdmin
-        ? query(collection(db, "payments"), where("timestamp", ">=", startDate))
-        : query(
-            collection(db, "payments"),
-            where("timestamp", ">=", startDate),
-            where("orphanageId", "==", orphanageId)
-          );
-
-      const donorsQuery = isSuperAdmin
-        ? query(collection(db, "donors"), where("createdAt", ">=", startDate))
-        : query(
-            collection(db, "donors"),
-            where("createdAt", ">=", startDate),
-            where("orphanageId", "==", orphanageId)
-          );
-
-      const [paymentsSnap, donorsSnap] = await Promise.all([
-        getDocs(paymentsQuery),
-        getDocs(donorsQuery),
-      ]);
-
-      setPayments(
-        paymentsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Payment, "id">),
-        }))
-      );
-      setDonors(
-        donorsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Donor, "id">),
-        }))
-      );
     };
 
-    void fetch();
-  }, [range, user, getStartDate]);
+    void loadData();
+  }, [range, user]);
 
   return (
     <ProtectedRoute allowedRoles={["superAdmin", "orphanageAdmin"]}>
@@ -122,20 +96,69 @@ export default function Dashboard() {
               <DateFilter range={range} setRange={setRange} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <MetricCard
-                title="Total Collected"
-                value={payments.reduce((sum, p) => sum + p.amount, 0)}
-              />
-              <MetricCard title="New Donors" value={donors.length} />
-              <MetricCard title="Payments" value={payments.length} />
-            </div>
+            {error && (
+              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-800 rounded">
+                {error}
+              </div>
+            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <PaymentsChart payments={payments} />
-              <DonorGrowthChart donors={donors} />
-              <TierPieChart donors={donors} />
-            </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : stats ? (
+              <>
+                {/* Metrics Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  <MetricCard
+                    title="Total Donations"
+                    value={stats.totalDonations}
+                    prefix="₦"
+                  />
+                  <MetricCard title="Total Donors" value={stats.totalDonors} />
+                  <MetricCard
+                    title="Total Payments"
+                    value={stats.totalPayments}
+                  />
+                  <MetricCard
+                    title="Active Recurring"
+                    value={stats.activeRecurringPlans}
+                  />
+                </div>
+
+                {/* MRR Card (if any recurring) */}
+                {stats.mrr > 0 && (
+                  <div className="mb-8">
+                    <div className="bg-gradient-to-r from-green-400 to-green-600 rounded shadow p-6 text-white">
+                      <h3 className="text-sm opacity-90 mb-1">
+                        Monthly Recurring Revenue (MRR)
+                      </h3>
+                      <p className="text-3xl font-bold">
+                        ₦{stats.mrr.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <PaymentsChart data={stats.paymentsOverTime} />
+                  <DonorGrowthChart data={stats.donorsOverTime} />
+                </div>
+
+                {/* Top Donors & Orphanages */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <TopDonorsTable donors={stats.topDonors} />
+                  {claims.superAdmin && stats.topOrphanages && (
+                    <TopOrphanagesTable orphanages={stats.topOrphanages} />
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-gray-500 py-12">
+                No data available.
+              </div>
+            )}
           </main>
         </div>
       </div>
