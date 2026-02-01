@@ -40,12 +40,12 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function DonorGrowthChart({ data }: DonorGrowthChartProps) {
-  // Calculate cumulative donor count
-  let cumulative = 0;
-  const cumulativeData = data.map((d) => {
-    cumulative += d.count;
-    return cumulative;
-  });
+  // Calculate cumulative donor count (pure computation — avoids state mutation during render)
+  const cumulativeData = data.reduce<number[]>((acc, d) => {
+    const next = (acc.length ? acc[acc.length - 1] : 0) + d.count;
+    acc.push(next);
+    return acc;
+  }, []);
 
   const chartData = {
     labels: data.map((d) => formatDateLabel(d.date)),

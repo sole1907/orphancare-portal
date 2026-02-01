@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   collection,
   addDoc,
@@ -64,31 +64,34 @@ export default function ChildrenPage() {
   // orphanageCache to avoid duplicate lookups
   const orphanageCache = useRef<Record<string, string>>({});
 
-  async function enrichChildWithOrphanage(
-    childDoc: QueryDocumentSnapshot<DocumentData>
-  ): Promise<Child & { orphanageName?: string }> {
-    const data = childDoc.data() as Omit<Child, "id">;
-    let orphanageName = "";
+  const enrichChildWithOrphanage = useCallback(
+    async (
+      childDoc: QueryDocumentSnapshot<DocumentData>,
+    ): Promise<Child & { orphanageName?: string }> => {
+      const data = childDoc.data() as Omit<Child, "id">;
+      let orphanageName = "";
 
-    if (isSuperAdmin && data.orphanageId) {
-      if (orphanageCache.current[data.orphanageId]) {
-        orphanageName = orphanageCache.current[data.orphanageId];
-      } else {
-        const orphanageRef = doc(db, "orphanages", data.orphanageId);
-        const orphanageSnap = await getDoc(orphanageRef);
-        if (orphanageSnap.exists()) {
-          orphanageName = orphanageSnap.data().name || "";
-          orphanageCache.current[data.orphanageId] = orphanageName;
+      if (isSuperAdmin && data.orphanageId) {
+        if (orphanageCache.current[data.orphanageId]) {
+          orphanageName = orphanageCache.current[data.orphanageId];
+        } else {
+          const orphanageRef = doc(db, "orphanages", data.orphanageId);
+          const orphanageSnap = await getDoc(orphanageRef);
+          if (orphanageSnap.exists()) {
+            orphanageName = orphanageSnap.data().name || "";
+            orphanageCache.current[data.orphanageId] = orphanageName;
+          }
         }
       }
-    }
 
-    return {
-      id: childDoc.id,
-      ...data,
-      orphanageName,
-    };
-  }
+      return {
+        id: childDoc.id,
+        ...data,
+        orphanageName,
+      };
+    },
+    [isSuperAdmin],
+  );
 
   useEffect(() => {
     if (!isSuperAdmin && !orphanageId) return;
@@ -97,7 +100,7 @@ export default function ChildrenPage() {
       ? query(collection(db, "children"))
       : query(
           collection(db, "children"),
-          where("orphanageId", "==", orphanageId)
+          where("orphanageId", "==", orphanageId),
         );
 
     const q = query(baseQuery, orderBy("createdAt", "desc"), limit(10));
@@ -106,7 +109,7 @@ export default function ChildrenPage() {
       // wrap async work in inner function
       (async () => {
         const docs = await Promise.all(
-          snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc))
+          snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc)),
         );
         setList(docs);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
@@ -115,7 +118,7 @@ export default function ChildrenPage() {
     });
 
     return unsubscribe;
-  }, [isSuperAdmin, orphanageId]);
+  }, [isSuperAdmin, orphanageId, enrichChildWithOrphanage]);
 
   const fetchChildren = async () => {
     if (!hasMore || !lastDoc) return;
@@ -124,20 +127,20 @@ export default function ChildrenPage() {
       ? query(collection(db, "children"))
       : query(
           collection(db, "children"),
-          where("orphanageId", "==", orphanageId)
+          where("orphanageId", "==", orphanageId),
         );
 
     const q = query(
       baseQuery,
       orderBy("createdAt", "desc"),
       startAfter(lastDoc),
-      limit(10)
+      limit(10),
     );
 
     const snapshot = await getDocs(q);
 
     const newDocs = await Promise.all(
-      snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc))
+      snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc)),
     );
 
     setList((prev) => [...prev, ...newDocs]);
@@ -302,7 +305,7 @@ export default function ChildrenPage() {
                     <ul className="border rounded bg-white shadow max-h-40 overflow-y-auto">
                       {allHobbies
                         .filter((h) =>
-                          h.toLowerCase().includes(hobbyInput.toLowerCase())
+                          h.toLowerCase().includes(hobbyInput.toLowerCase()),
                         )
                         .slice(0, 5)
                         .map((h) => (
