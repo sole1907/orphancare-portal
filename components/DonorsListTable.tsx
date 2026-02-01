@@ -98,9 +98,33 @@ export default function DonorsListTable({
                       })}
                       {formatInterval(donor.recurringPlan.interval)}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Next: {formatDate(donor.recurringPlan.nextChargeAt)}
-                    </p>
+                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                      <p>
+                        Donation:{" "}
+                        {donor.recurringPlan.baseAmount.toLocaleString("en-NG", {
+                          style: "currency",
+                          currency: "NGN",
+                          minimumFractionDigits: 0,
+                        })}
+                      </p>
+                      <p>
+                        Tip:{" "}
+                        {donor.recurringPlan.tipAmount.toLocaleString("en-NG", {
+                          style: "currency",
+                          currency: "NGN",
+                          minimumFractionDigits: 0,
+                        })}
+                      </p>
+                      <p>
+                        Fee:{" "}
+                        {donor.recurringPlan.transactionFee.toLocaleString("en-NG", {
+                          style: "currency",
+                          currency: "NGN",
+                          minimumFractionDigits: 0,
+                        })}
+                      </p>
+                      <p>Next: {formatDate(donor.recurringPlan.nextChargeAt)}</p>
+                    </div>
                   </div>
                 ) : (
                   <span className="text-gray-400">-</span>

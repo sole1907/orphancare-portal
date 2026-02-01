@@ -24,6 +24,10 @@ export interface RecurringPlanInfo {
   amount: number;
   interval: "daily" | "monthly" | "quarterly" | "yearly";
   nextChargeAt: string;
+  // Breakdown fields
+  baseAmount: number;
+  tipAmount: number;
+  transactionFee: number;
 }
 
 export interface DonorListItem {
