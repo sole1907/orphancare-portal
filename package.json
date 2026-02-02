@@ -10,6 +10,7 @@
     "tailwind:init": "tailwindcss init -p"
   },
   "dependencies": {
+    "@sentry/nextjs": "^8.0.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "chart.js": "^4.5.1",

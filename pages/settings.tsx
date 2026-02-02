@@ -112,6 +112,18 @@ export default function SettingsPage() {
                 </Link>
               )}
 
+              {(claims.superAdmin || claims.orphanageAdmin) && (
+                <Link href="/settings/audit-logs">
+                  <div className="bg-white rounded shadow p-6 cursor-pointer hover:shadow-lg transition">
+                    <h3 className="text-xl font-semibold mb-2">Audit Logs</h3>
+                    <p className="text-gray-600">
+                      View system audit logs including user actions, approvals,
+                      and administrative changes.
+                    </p>
+                  </div>
+                </Link>
+              )}
+
               {/* Refresh Bank List Card (super admins only) */}
               {claims.superAdmin && (
                 <div
