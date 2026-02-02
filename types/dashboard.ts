@@ -31,6 +31,7 @@ export interface DashboardStats {
   totalPayments: number;
   activeRecurringPlans: number;
   mrr: number;
+  monthlyRecurringTip?: number;
   periodStart: string;
   periodEnd: string;
   paymentsOverTime: PaymentTimePoint[];

@@ -128,15 +128,32 @@ export default function Dashboard() {
 
                 {/* MRR Card (if any recurring) */}
                 {stats.mrr > 0 && (
-                  <div className="mb-8">
-                    <div className="bg-gradient-to-r from-green-400 to-green-600 rounded shadow p-6 text-white">
+                  <div className="mb-8 flex gap-6">
+                    <div className="flex-1 bg-gradient-to-r from-green-400 to-green-600 rounded shadow p-6 text-white">
                       <h3 className="text-sm opacity-90 mb-1">
                         Monthly Recurring Revenue (MRR)
+                        {claims.superAdmin && (
+                          <span className="ml-1 text-xs opacity-75">
+                            for All Orphanages
+                          </span>
+                        )}
                       </h3>
                       <p className="text-3xl font-bold">
                         ₦{stats.mrr.toLocaleString()}
                       </p>
                     </div>
+                    {claims.superAdmin &&
+                      stats.monthlyRecurringTip !== undefined &&
+                      stats.monthlyRecurringTip > 0 && (
+                        <div className="flex-1 bg-gradient-to-r from-purple-400 to-purple-600 rounded shadow p-6 text-white">
+                          <h3 className="text-sm opacity-90 mb-1">
+                            Monthly Recurring Tip
+                          </h3>
+                          <p className="text-3xl font-bold">
+                            ₦{stats.monthlyRecurringTip.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
                   </div>
                 )}
 
