@@ -18,8 +18,8 @@ const sentryWebpackPluginOptions = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-  tunnelRoute: "/monitoring",
+  // tunnelRoute removed - Firebase Hosting doesn't support it (returns 403)
+  // Sentry will send events directly to ingest.sentry.io
 
   // Hides source maps from generated client bundles
   hideSourceMaps: true,

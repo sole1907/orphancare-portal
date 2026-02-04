@@ -14,7 +14,7 @@ export default function ActionCenterPage() {
   const [loadingAcctAction, setLoadingAcctAction] = useState<
     "approve" | "reject" | null
   >(null);
-  const [sentryTestStatus, setSentryTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [sentryTestStatus, setSentryTestStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   // -------------------------------
   // FETCH PENDING ORPHANAGE ACCOUNTS
@@ -90,15 +90,25 @@ export default function ActionCenterPage() {
   // -------------------------------
   // TEST SENTRY INTEGRATION
   // -------------------------------
-  const testSentry = () => {
+  const testSentry = async () => {
+    setSentryTestStatus('loading');
     try {
-      Sentry.captureMessage('Test message from orphancare-portal Action Center', 'info');
-      Sentry.captureException(new Error('Sentry Test Error - ' + new Date().toISOString()));
-      setSentryTestStatus('success');
-      setTimeout(() => setSentryTestStatus('idle'), 3000);
+      const eventId = Sentry.captureException(
+        new Error('Sentry Test Error - ' + new Date().toISOString())
+      );
+      // Wait for the event to actually be sent
+      await Sentry.flush(2000);
+
+      if (eventId) {
+        setSentryTestStatus('success');
+        console.log('Sentry event ID:', eventId);
+      } else {
+        setSentryTestStatus('error');
+      }
     } catch (err) {
       setSentryTestStatus('error');
     }
+    setTimeout(() => setSentryTestStatus('idle'), 3000);
   };
 
   return (
@@ -181,9 +191,14 @@ export default function ActionCenterPage() {
               </p>
               <button
                 onClick={testSentry}
-                className="px-4 py-2 rounded text-white bg-orange-600 hover:bg-orange-700"
+                disabled={sentryTestStatus === 'loading'}
+                className={`px-4 py-2 rounded text-white ${
+                  sentryTestStatus === 'loading'
+                    ? 'bg-orange-400 cursor-not-allowed'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
               >
-                Test Sentry
+                {sentryTestStatus === 'loading' ? 'Sending...' : 'Test Sentry'}
               </button>
               {sentryTestStatus === 'success' && (
                 <p className="mt-2 text-green-600">
