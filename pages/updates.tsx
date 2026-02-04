@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   collection,
   addDoc,
@@ -23,6 +23,7 @@ import { db, storage, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { getIdTokenResult } from "firebase/auth";
 import Image from "next/image";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function UpdatesPage() {
   const [user] = useAuthState(auth);
@@ -44,6 +45,12 @@ export default function UpdatesPage() {
     []
   );
   const [selectedOrphanageFilter, setSelectedOrphanageFilter] = useState("");
+
+  // Child search state
+  const [childSearchQuery, setChildSearchQuery] = useState("");
+  const [showChildDropdown, setShowChildDropdown] = useState(false);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  const childSearchRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -83,28 +90,77 @@ export default function UpdatesPage() {
     fetchOrphanage();
   }, [orphanageId]);
 
-  // Fetch children for dropdown (filtered by orphanage for admins)
+  // Fetch children from API (handles decryption server-side)
+  const fetchChildrenFromApi = useCallback(async () => {
+    if (!user || (!orphanageId && !isSuperAdmin)) return;
+
+    setLoadingChildren(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/getChildren`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cursor: null,
+          pageSize: 500, // Fetch all children for search
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch children");
+      }
+
+      const json = await res.json();
+      setChildren(json.data.children);
+    } catch (error) {
+      console.error("Error fetching children:", error);
+    } finally {
+      setLoadingChildren(false);
+    }
+  }, [user, orphanageId, isSuperAdmin]);
+
   useEffect(() => {
-    const fetchChildren = async () => {
-      if (!orphanageId && !isSuperAdmin) return;
+    if (user && claims !== null) {
+      fetchChildrenFromApi();
+    }
+  }, [user, claims, fetchChildrenFromApi]);
 
-      const q = isSuperAdmin
-        ? query(collection(db, "children"))
-        : query(
-            collection(db, "children"),
-            where("orphanageId", "==", orphanageId)
-          );
+  // Filter children based on search query
+  const filteredChildren = children.filter((child) =>
+    child.name?.toLowerCase().includes(childSearchQuery.toLowerCase())
+  );
 
-      const snapshot = await getDocs(q);
-      setChildren(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Child, "id">),
-        }))
-      );
+  // Get selected child name for display
+  const selectedChild = children.find((c) => c.id === childId);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        childSearchRef.current &&
+        !childSearchRef.current.contains(event.target as Node)
+      ) {
+        setShowChildDropdown(false);
+      }
     };
-    fetchChildren();
-  }, [orphanageId, isSuperAdmin]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle child selection
+  const handleSelectChild = (child: Child | null) => {
+    if (child) {
+      setChildId(child.id);
+      setChildSearchQuery(child.name || "");
+    } else {
+      setChildId("");
+      setChildSearchQuery("");
+    }
+    setShowChildDropdown(false);
+  };
 
   // Fetch orphanages list for super admin filter
   useEffect(() => {
@@ -221,6 +277,7 @@ export default function UpdatesPage() {
       setTitle("");
       setBody("");
       setChildId("");
+      setChildSearchQuery("");
       setImageUrl("");
       setEditingId(null);
     } catch (error) {
@@ -248,6 +305,13 @@ export default function UpdatesPage() {
     setTitle(update.title);
     setBody(update.body);
     setChildId(update.childId || "");
+    // Set the search query to show the child's name when editing
+    if (update.childId) {
+      const child = children.find((c) => c.id === update.childId);
+      setChildSearchQuery(child?.name || update.childName || "");
+    } else {
+      setChildSearchQuery("");
+    }
     setImageUrl(update.imageUrl || "");
     setEditingId(update.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -258,6 +322,7 @@ export default function UpdatesPage() {
     setTitle("");
     setBody("");
     setChildId("");
+    setChildSearchQuery("");
     setImageUrl("");
     setEditingId(null);
   };
@@ -308,18 +373,96 @@ export default function UpdatesPage() {
                   onChange={(e) => setBody(e.target.value)}
                 />
 
-                <select
-                  className="border border-gray-300 rounded px-4 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={childId}
-                  onChange={(e) => setChildId(e.target.value)}
-                >
-                  <option value="">General Update (not child-specific)</option>
-                  {children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                {/* Child Search Field */}
+                <div ref={childSearchRef} className="relative mb-4">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder={
+                          loadingChildren
+                            ? "Loading children..."
+                            : "Search for a child (optional)"
+                        }
+                        value={childSearchQuery}
+                        onChange={(e) => {
+                          setChildSearchQuery(e.target.value);
+                          setShowChildDropdown(true);
+                          if (e.target.value === "") {
+                            setChildId("");
+                          }
+                        }}
+                        onFocus={() => setShowChildDropdown(true)}
+                        disabled={loadingChildren}
+                      />
+                      {selectedChild && (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectChild(null)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selected child indicator */}
+                  {selectedChild && (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded">
+                      {selectedChild.photoUrl && (
+                        <Image
+                          src={selectedChild.photoUrl}
+                          alt={selectedChild.name || "Child"}
+                          width={24}
+                          height={24}
+                          className="rounded-full object-cover"
+                        />
+                      )}
+                      <span>Selected: {selectedChild.name}</span>
+                    </div>
+                  )}
+
+                  {/* Dropdown results */}
+                  {showChildDropdown && childSearchQuery && (
+                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+                      {filteredChildren.length === 0 ? (
+                        <li className="px-4 py-2 text-gray-500">
+                          No children found
+                        </li>
+                      ) : (
+                        filteredChildren.slice(0, 20).map((child) => (
+                          <li
+                            key={child.id}
+                            onClick={() => handleSelectChild(child)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-3"
+                          >
+                            {child.photoUrl && (
+                              <Image
+                                src={child.photoUrl}
+                                alt={child.name || "Child"}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover"
+                              />
+                            )}
+                            <span>{child.name}</span>
+                          </li>
+                        ))
+                      )}
+                      {filteredChildren.length > 20 && (
+                        <li className="px-4 py-2 text-gray-500 text-sm">
+                          Type more to narrow results...
+                        </li>
+                      )}
+                    </ul>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    Leave empty for a general update not specific to any child
+                  </p>
+                </div>
 
                 {/* Image Upload */}
                 <div
