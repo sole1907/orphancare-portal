@@ -48,7 +48,7 @@ export default function Dashboard() {
           const orphanageDoc = await getDoc(orphanageRef);
           if (orphanageDoc.exists()) {
             const data = orphanageDoc.data();
-            setUserHasSubaccount(!!data.subaccountCode);
+            setUserHasSubaccount(!!data.subaccountCode_encrypted);
           }
         }
 
