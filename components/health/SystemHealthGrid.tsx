@@ -1,11 +1,19 @@
 import { DeepHealthResponse } from "@/types/health";
 import HealthStatusCard from "./HealthStatusCard";
+import SLAOverview from "./SLAOverview";
+import SLAConfigManager from "./SLAConfigManager";
 
 interface SystemHealthGridProps {
   health: DeepHealthResponse;
+  showSlaMetrics?: boolean;
+  showSlaConfig?: boolean;
 }
 
-export default function SystemHealthGrid({ health }: SystemHealthGridProps) {
+export default function SystemHealthGrid({
+  health,
+  showSlaMetrics = true,
+  showSlaConfig = false,
+}: SystemHealthGridProps) {
   const statusColors = {
     healthy: "bg-green-500",
     degraded: "bg-yellow-500",
@@ -105,6 +113,12 @@ export default function SystemHealthGrid({ health }: SystemHealthGridProps) {
           </div>
         </div>
       )}
+
+      {/* SLA Metrics */}
+      {showSlaMetrics && <SLAOverview />}
+
+      {/* SLA Configuration */}
+      {showSlaConfig && <SLAConfigManager />}
     </div>
   );
 }
