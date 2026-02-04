@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { Orphanage, OrphanageData } from "@/types/orphanage";
 import { BACKEND_ENDPOINTS } from "@/lib/config";
+import * as Sentry from "@sentry/nextjs";
 
 export default function ActionCenterPage() {
   const [pendingAccounts, setPendingAccounts] = useState<Orphanage[]>([]);
@@ -13,6 +14,7 @@ export default function ActionCenterPage() {
   const [loadingAcctAction, setLoadingAcctAction] = useState<
     "approve" | "reject" | null
   >(null);
+  const [sentryTestStatus, setSentryTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   // -------------------------------
   // FETCH PENDING ORPHANAGE ACCOUNTS
@@ -85,6 +87,20 @@ export default function ActionCenterPage() {
     }
   };
 
+  // -------------------------------
+  // TEST SENTRY INTEGRATION
+  // -------------------------------
+  const testSentry = () => {
+    try {
+      Sentry.captureMessage('Test message from orphancare-portal Action Center', 'info');
+      Sentry.captureException(new Error('Sentry Test Error - ' + new Date().toISOString()));
+      setSentryTestStatus('success');
+      setTimeout(() => setSentryTestStatus('idle'), 3000);
+    } catch (err) {
+      setSentryTestStatus('error');
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={["superAdmin"]}>
       <div className="min-h-screen flex flex-col bg-background text-base">
@@ -151,6 +167,33 @@ export default function ActionCenterPage() {
                     </div>
                   </div>
                 ))
+              )}
+            </section>
+
+            {/* -------------------------------------------------- */}
+            {/* SENTRY TEST SECTION */}
+            {/* -------------------------------------------------- */}
+            <section className="mb-12">
+              <h3 className="text-xl font-bold mb-2">Test Sentry</h3>
+              <hr className="mb-4" />
+              <p className="text-gray-600 mb-4">
+                Trigger a test error to verify Sentry integration is working.
+              </p>
+              <button
+                onClick={testSentry}
+                className="px-4 py-2 rounded text-white bg-orange-600 hover:bg-orange-700"
+              >
+                Test Sentry
+              </button>
+              {sentryTestStatus === 'success' && (
+                <p className="mt-2 text-green-600">
+                  Test events sent! Check your Sentry dashboard.
+                </p>
+              )}
+              {sentryTestStatus === 'error' && (
+                <p className="mt-2 text-red-600">
+                  Failed to send test events.
+                </p>
               )}
             </section>
           </main>
