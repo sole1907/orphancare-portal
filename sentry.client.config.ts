@@ -54,6 +54,6 @@ Sentry.init({
     return event;
   },
 
-  // Set environment
-  environment: process.env.NODE_ENV || "development",
+  // Set environment (NEXT_PUBLIC_SENTRY_ENVIRONMENT for deployment-specific tagging)
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
 });

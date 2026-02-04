@@ -15,8 +15,8 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: process.env.NODE_ENV !== "production",
 
-  // Set environment
-  environment: process.env.NODE_ENV || "development",
+  // Set environment (NEXT_PUBLIC_SENTRY_ENVIRONMENT for deployment-specific tagging)
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
 
   // Sanitize sensitive data before sending to Sentry
   beforeSend(event) {
