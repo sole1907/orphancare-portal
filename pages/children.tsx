@@ -1,21 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  doc,
-  query,
-  where,
-  serverTimestamp,
-  orderBy,
-  limit,
-  startAfter,
-  QueryDocumentSnapshot,
-  DocumentData,
-  onSnapshot,
-  getDoc,
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
@@ -25,20 +9,26 @@ import { db, storage, auth } from "@/lib/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Image from "next/image";
 import { getIdTokenResult } from "firebase/auth";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
+
+interface ChildWithOrphanage extends Child {
+  orphanageName?: string;
+}
 
 export default function ChildrenPage() {
   const [user] = useAuthState(auth);
-  const [list, setList] = useState<Child[]>([]);
+  const [list, setList] = useState<ChildWithOrphanage[]>([]);
   const [form, setForm] = useState<Partial<Child>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [claims, setClaims] = useState<Record<string, unknown> | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
   const [allHobbies, setAllHobbies] = useState<string[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
-  const [lastDoc, setLastDoc] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchClaims = async () => {
@@ -61,91 +51,63 @@ export default function ChildrenPage() {
   const isSuperAdmin = claims?.["superAdmin"] === true;
   const orphanageId = claims?.["orphanageId"] as string | undefined;
 
-  // orphanageCache to avoid duplicate lookups
-  const orphanageCache = useRef<Record<string, string>>({});
+  // Fetch children from API
+  const fetchChildrenFromApi = useCallback(
+    async (cursor?: string | null, reset = false) => {
+      if (!user) return;
+      if (loading) return;
 
-  const enrichChildWithOrphanage = useCallback(
-    async (
-      childDoc: QueryDocumentSnapshot<DocumentData>,
-    ): Promise<Child & { orphanageName?: string }> => {
-      const data = childDoc.data() as Omit<Child, "id">;
-      let orphanageName = "";
+      setLoading(true);
 
-      if (isSuperAdmin && data.orphanageId) {
-        if (orphanageCache.current[data.orphanageId]) {
-          orphanageName = orphanageCache.current[data.orphanageId];
-        } else {
-          const orphanageRef = doc(db, "orphanages", data.orphanageId);
-          const orphanageSnap = await getDoc(orphanageRef);
-          if (orphanageSnap.exists()) {
-            orphanageName = orphanageSnap.data().name || "";
-            orphanageCache.current[data.orphanageId] = orphanageName;
-          }
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/getChildren`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            cursor: reset ? null : cursor,
+            pageSize: 10,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch children");
         }
-      }
 
-      return {
-        id: childDoc.id,
-        ...data,
-        orphanageName,
-      };
+        const json = await res.json();
+        const data = json.data;
+
+        if (reset) {
+          setList(data.children);
+        } else {
+          setList((prev) => [...prev, ...data.children]);
+        }
+        setNextCursor(data.nextCursor);
+        setHasMore(data.hasMore);
+      } catch (error) {
+        console.error("Error fetching children:", error);
+      } finally {
+        setLoading(false);
+      }
     },
-    [isSuperAdmin],
+    [user, loading],
   );
 
+  // Initial load
   useEffect(() => {
-    if (!isSuperAdmin && !orphanageId) return;
+    if (user && claims !== null) {
+      fetchChildrenFromApi(null, true);
+    }
+  }, [user, claims]);
 
-    const baseQuery = isSuperAdmin
-      ? query(collection(db, "children"))
-      : query(
-          collection(db, "children"),
-          where("orphanageId", "==", orphanageId),
-        );
-
-    const q = query(baseQuery, orderBy("createdAt", "desc"), limit(10));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // wrap async work in inner function
-      (async () => {
-        const docs = await Promise.all(
-          snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc)),
-        );
-        setList(docs);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMore(snapshot.docs.length === 10);
-      })();
-    });
-
-    return unsubscribe;
-  }, [isSuperAdmin, orphanageId, enrichChildWithOrphanage]);
-
-  const fetchChildren = async () => {
-    if (!hasMore || !lastDoc) return;
-
-    const baseQuery = isSuperAdmin
-      ? query(collection(db, "children"))
-      : query(
-          collection(db, "children"),
-          where("orphanageId", "==", orphanageId),
-        );
-
-    const q = query(
-      baseQuery,
-      orderBy("createdAt", "desc"),
-      startAfter(lastDoc),
-      limit(10),
-    );
-
-    const snapshot = await getDocs(q);
-
-    const newDocs = await Promise.all(
-      snapshot.docs.map((childDoc) => enrichChildWithOrphanage(childDoc)),
-    );
-
-    setList((prev) => [...prev, ...newDocs]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setHasMore(snapshot.docs.length === 10);
+  // Load more children
+  const loadMore = () => {
+    if (hasMore && nextCursor && !loading) {
+      fetchChildrenFromApi(nextCursor, false);
+    }
   };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -174,23 +136,44 @@ export default function ChildrenPage() {
       return;
     }
 
-    if (editingId) {
-      await updateDoc(doc(db, "children", editingId), {
-        ...form,
-        updatedAt: serverTimestamp(),
-      });
-    } else {
-      await addDoc(collection(db, "children"), {
-        ...form,
-        orphanageId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    }
+    if (!user) return;
 
-    setForm({});
-    setEditingId(null);
-    fetchChildren();
+    setSaving(true);
+
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/saveChild`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: editingId || undefined,
+          name: form.name,
+          gender: form.gender,
+          birthday: form.birthday,
+          story: form.story,
+          photoUrl: form.photoUrl,
+          hobbies: form.hobbies || [],
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to save child: ${errorText}`);
+      }
+
+      setForm({});
+      setEditingId(null);
+      // Refresh the list
+      fetchChildrenFromApi(null, true);
+    } catch (error) {
+      console.error("Error saving child:", error);
+      alert("Failed to save child. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addHobby = (hobby: string) => {
@@ -397,12 +380,23 @@ export default function ChildrenPage() {
                 <div className="pt-4">
                   <button
                     onClick={saveChild}
-                    disabled={uploading}
+                    disabled={uploading || saving}
                     className="bg-primary text-white px-4 py-2 rounded w-full hover:bg-sky-400 transition disabled:opacity-50"
                   >
-                    {editingId ? "Update Child" : "Add Child"}
+                    {saving
+                      ? "Saving..."
+                      : editingId
+                        ? "Update Child"
+                        : "Add Child"}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Loading indicator */}
+            {loading && list.length === 0 && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             )}
 
@@ -459,25 +453,28 @@ export default function ChildrenPage() {
                     )}
                   </div>
 
-                  <button
-                    className="text-blue-600 text-sm hover:underline whitespace-nowrap"
-                    onClick={() => {
-                      setEditingId(c.id);
-                      setForm(c);
-                    }}
-                  >
-                    Edit
-                  </button>
+                  {!isSuperAdmin && (
+                    <button
+                      className="text-blue-600 text-sm hover:underline whitespace-nowrap"
+                      onClick={() => {
+                        setEditingId(c.id);
+                        setForm(c);
+                      }}
+                    >
+                      Edit
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
 
             {hasMore && (
               <button
-                onClick={fetchChildren}
-                className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-sky-400"
+                onClick={loadMore}
+                disabled={loading}
+                className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-sky-400 disabled:opacity-50"
               >
-                Load More
+                {loading ? "Loading..." : "Load More"}
               </button>
             )}
           </main>
