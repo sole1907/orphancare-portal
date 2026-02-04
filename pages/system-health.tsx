@@ -19,7 +19,9 @@ export default function SystemHealthPage() {
       const data = await fetchDeepHealth();
       setHealth(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch health status");
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch health status",
+      );
     } finally {
       setLoading(false);
     }
@@ -118,11 +120,15 @@ export default function SystemHealthPage() {
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                   />
                 </svg>
-                <span className="ml-3 text-gray-600">Loading health status...</span>
+                <span className="ml-3 text-gray-600">
+                  Loading health status...
+                </span>
               </div>
             )}
 
-            {health && <SystemHealthGrid health={health} />}
+            {health && (
+              <SystemHealthGrid health={health} showSlaConfig={true} />
+            )}
           </main>
         </div>
       </div>
