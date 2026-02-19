@@ -8,10 +8,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#4FC3F7", // Sky Blue 600
-        accent: "#FF9E80", // Coral Peach
+        primary: "#1a365d", // Navy Blue (from logo)
+        "primary-light": "#667eea", // Purple/Indigo (from logo heart)
+        accent: "#38b2ac", // Teal (from logo hand)
+        "accent-warm": "#ecc94b", // Golden (from logo child)
         background: "#F5F5F5", // Soft Gray
-        base: "#2C3E50", // Navy
+        base: "#1a365d", // Navy
       },
     },
   },
