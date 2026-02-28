@@ -12,6 +12,14 @@ export interface Donation {
 // API types for donation list
 export type DonationStatus = "pending" | "success" | "failed";
 
+export interface DonationChildInfo {
+  childId: string;
+  childName: string;
+  photoUrl?: string;
+  gender?: string;
+  story?: string;
+}
+
 export interface DonationListItem {
   donationId: string;
   donorName: string;
@@ -24,6 +32,7 @@ export interface DonationListItem {
   status: DonationStatus;
   recurring: boolean;
   createdAt: string;
+  child?: DonationChildInfo; // Child donated to (if applicable)
 }
 
 export interface DonationsListResponse {

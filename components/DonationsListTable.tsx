@@ -1,5 +1,7 @@
 // components/DonationsListTable.tsx
-import { DonationListItem, DonationStatus } from "@/types/donation";
+import { useState } from "react";
+import { DonationListItem, DonationStatus, DonationChildInfo } from "@/types/donation";
+import ChildProfileModal from "./ChildProfileModal";
 
 interface DonationsListTableProps {
   donations: DonationListItem[];
@@ -30,6 +32,8 @@ export default function DonationsListTable({
   showOrphanage,
   showEmail,
 }: DonationsListTableProps) {
+  const [selectedChild, setSelectedChild] = useState<DonationChildInfo | null>(null);
+
   if (donations.length === 0) {
     return (
       <div className="bg-white rounded shadow p-8 text-center">
@@ -39,6 +43,7 @@ export default function DonationsListTable({
   }
 
   return (
+    <>
     <div className="overflow-x-auto rounded shadow">
       <table className="min-w-full bg-white border border-gray-200">
         <thead className="bg-primary text-white">
@@ -49,6 +54,9 @@ export default function DonationsListTable({
                 Orphanage
               </th>
             )}
+            <th className="px-4 py-3 text-left text-sm font-semibold">
+              Child
+            </th>
             <th className="px-4 py-3 text-right text-sm font-semibold">
               Amount
             </th>
@@ -87,6 +95,18 @@ export default function DonationsListTable({
                   {donation.orphanageName || "-"}
                 </td>
               )}
+              <td className="px-4 py-2 text-sm">
+                {donation.child ? (
+                  <button
+                    onClick={() => setSelectedChild(donation.child!)}
+                    className="text-primary hover:text-primary/80 hover:underline font-medium transition-colors"
+                  >
+                    {donation.child.childName}
+                  </button>
+                ) : (
+                  <span className="text-gray-400">-</span>
+                )}
+              </td>
               <td className="px-4 py-2 text-sm text-right">
                 {donation.amount.toLocaleString("en-NG", {
                   style: "currency",
@@ -135,5 +155,14 @@ export default function DonationsListTable({
         </tbody>
       </table>
     </div>
+
+    {selectedChild && (
+      <ChildProfileModal
+        open={!!selectedChild}
+        onClose={() => setSelectedChild(null)}
+        child={selectedChild}
+      />
+    )}
+    </>
   );
 }
