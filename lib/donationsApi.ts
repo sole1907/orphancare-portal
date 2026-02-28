@@ -1,7 +1,54 @@
 // lib/donationsApi.ts
 import { BACKEND_ENDPOINTS } from "./config";
 import { auth } from "./firebase";
-import { DonationsListRequest, DonationsListResponse } from "@/types/donation";
+import { DonationsListRequest, DonationsListResponse, DonationListItem } from "@/types/donation";
+
+interface ApiDonationItem {
+  donationId: string;
+  donorName: string;
+  donorEmail: string;
+  orphanageName?: string;
+  amount: number;
+  netAmount: number;
+  tipAmount: number;
+  paystackFee: number;
+  status: "pending" | "success" | "failed";
+  recurring: boolean;
+  createdAt: string;
+  childId?: string;
+  childName?: string;
+  childPhoto?: string;
+  childGender?: string;
+  childStory?: string;
+}
+
+function transformDonation(item: ApiDonationItem): DonationListItem {
+  const donation: DonationListItem = {
+    donationId: item.donationId,
+    donorName: item.donorName,
+    donorEmail: item.donorEmail,
+    orphanageName: item.orphanageName,
+    amount: item.amount,
+    netAmount: item.netAmount,
+    tipAmount: item.tipAmount,
+    paystackFee: item.paystackFee,
+    status: item.status,
+    recurring: item.recurring,
+    createdAt: item.createdAt,
+  };
+
+  if (item.childId && item.childName) {
+    donation.child = {
+      childId: item.childId,
+      childName: item.childName,
+      photoUrl: item.childPhoto,
+      gender: item.childGender,
+      story: item.childStory,
+    };
+  }
+
+  return donation;
+}
 
 export async function fetchDonationsList(
   request: DonationsListRequest
@@ -26,5 +73,13 @@ export async function fetchDonationsList(
   }
 
   const json = await res.json();
-  return json.data;
+  const data = json.data;
+
+  return {
+    donations: data.donations.map(transformDonation),
+    total: data.total,
+    page: data.page,
+    pageSize: data.pageSize,
+    totalPages: data.totalPages,
+  };
 }
