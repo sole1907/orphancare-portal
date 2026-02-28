@@ -20,6 +20,8 @@ interface ApiDonationItem {
   childPhoto?: string;
   childGender?: string;
   childStory?: string;
+  childDateOfBirth?: string;
+  childHobbies?: string[];
 }
 
 function transformDonation(item: ApiDonationItem): DonationListItem {
@@ -44,6 +46,8 @@ function transformDonation(item: ApiDonationItem): DonationListItem {
       photoUrl: item.childPhoto,
       gender: item.childGender,
       story: item.childStory,
+      dateOfBirth: item.childDateOfBirth,
+      hobbies: item.childHobbies,
     };
   }
 

@@ -18,6 +18,8 @@ export interface DonationChildInfo {
   photoUrl?: string;
   gender?: string;
   story?: string;
+  dateOfBirth?: string;
+  hobbies?: string[];
 }
 
 export interface DonationListItem {

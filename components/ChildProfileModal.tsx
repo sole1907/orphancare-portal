@@ -7,6 +7,30 @@ interface ChildProfileModalProps {
   child: DonationChildInfo;
 }
 
+function calculateAge(dateOfBirth: string): number | null {
+  if (!dateOfBirth) return null;
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function formatDateOfBirth(dateOfBirth: string): string {
+  if (!dateOfBirth) return "";
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return dateOfBirth;
+  return dob.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default function ChildProfileModal({
   open,
   onClose,
@@ -83,15 +107,58 @@ export default function ChildProfileModal({
 
           {/* Details */}
           <div className="space-y-3">
+            {/* Age */}
+            {child.dateOfBirth && calculateAge(child.dateOfBirth) !== null && (
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500 text-sm font-medium w-24">
+                  Age:
+                </span>
+                <span className="text-gray-900">
+                  {calculateAge(child.dateOfBirth)} years old
+                </span>
+              </div>
+            )}
+
+            {/* Date of Birth */}
+            {child.dateOfBirth && (
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500 text-sm font-medium w-24">
+                  Birthday:
+                </span>
+                <span className="text-gray-900">
+                  {formatDateOfBirth(child.dateOfBirth)}
+                </span>
+              </div>
+            )}
+
             {/* Gender */}
             {child.gender && (
               <div className="flex items-center gap-3">
-                <span className="text-gray-500 text-sm font-medium w-16">
+                <span className="text-gray-500 text-sm font-medium w-24">
                   Gender:
                 </span>
                 <span className="text-gray-900">
                   {child.gender.charAt(0).toUpperCase() + child.gender.slice(1)}
                 </span>
+              </div>
+            )}
+
+            {/* Hobbies */}
+            {child.hobbies && child.hobbies.length > 0 && (
+              <div>
+                <span className="text-gray-500 text-sm font-medium block mb-1">
+                  Hobbies:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {child.hobbies.map((hobby, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                    >
+                      {hobby}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -107,7 +174,7 @@ export default function ChildProfileModal({
               </div>
             )}
 
-            {!child.story && !child.gender && (
+            {!child.story && !child.gender && !child.dateOfBirth && (!child.hobbies || child.hobbies.length === 0) && (
               <p className="text-gray-500 text-sm text-center py-2">
                 No additional information available.
               </p>
