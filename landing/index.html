@@ -497,6 +497,21 @@
       }
 
       /* ── RESPONSIVE ── */
+      @media (max-width: 600px) {
+        .logo-wrap {
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .logo-wrap img {
+          height: 80px;
+          max-width: none;
+        }
+        .logo-wordmark {
+          font-size: clamp(2.5rem, 11vw, 4rem);
+        }
+      }
+
       @media (max-width: 500px) {
         .store-buttons {
           flex-direction: column;
