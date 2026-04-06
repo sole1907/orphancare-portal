@@ -1,7 +1,13 @@
 import { Timestamp, FieldValue } from "firebase/firestore";
 
-export interface Orphanage {
-  id: string;
+type VerificationStatus =
+  | "otp_pending" // orphanage yet to complete OTP verification
+  | "notSetup" // orphanage registered but no bank details yet
+  | "pending" // orphanage submitted bank details, awaiting super admin approval
+  | "approved" // super admin approved
+  | "rejected"; // super admin rejected
+
+export interface OrphanageData {
   name: string;
   email: string;
   phone: string;
@@ -11,6 +17,25 @@ export interface Orphanage {
   status: string;
   createdAt?: Timestamp | FieldValue;
   registrationDocUrl?: string;
+  registrationDocMimeType?: string;
+  accountVerificationStatus?: VerificationStatus;
+
+  // Bank details
+  bankName?: string; // e.g. "Access Bank"
+  bankCode?: string; // e.g. "044"
+  accountName?: string; // e.g. "Orphanage Foundation"
+  accountNumber?: string; // e.g. "0123456789"
+  accountNumberMasked?: string; // e.g. "******6789"
+
+  // Metrics
+  childrenCount?: number;
+  lastUpdate?: Timestamp;
+  fundingProgress?: number;
+  logoUrl?: string;
+}
+
+export interface Orphanage extends OrphanageData {
+  id: string; // added only when reading from Firestore
 }
 
 export interface EditOrphanageModalProps {
@@ -36,6 +61,7 @@ export type OrphanageForm = {
   address: string;
   registrationNumber: string;
   registrationDocUrl: string;
+  registrationDocMimeType?: string;
 };
 
 export type OrphanageFormField =

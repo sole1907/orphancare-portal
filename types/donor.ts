@@ -17,3 +17,27 @@ export interface DonorGrowthChartProps {
 export interface TierPieChartProps {
   donors: Donor[];
 }
+
+// API types for donor list
+export interface DonorListItem {
+  donorUid: string;
+  name: string;
+  email: string;
+  totalAmount: number;
+  donationCount: number;
+  lastDonationAt: string | null;
+}
+
+export interface DonorsListResponse {
+  donors: DonorListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface DonorsListRequest {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}

@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { db, storage } from "../lib/firebase";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   addDoc,
@@ -12,20 +11,34 @@ import {
   serverTimestamp,
   QueryDocumentSnapshot,
   DocumentData,
+  where,
+  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
 import Image from "next/image";
 import {
   Orphanage,
   OrphanageForm,
   OrphanageFormField,
-} from "../types/orphanage";
-import { BACKEND_ENDPOINTS } from "../lib/config";
+} from "@/types/orphanage";
+import { auth, db, storage } from "@/lib/firebase";
+import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import PDFThumbnail from "@/components/PDFThumbnail";
+import { BACKEND_ENDPOINTS } from "@/lib/config";
 
 export default function OrphanagesPage() {
+  const MAX_FILE_SIZE_MB = 5;
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "application/pdf",
+  ];
+
   const [form, setForm] = useState<OrphanageForm>({
     name: "",
     contactName: "",
@@ -39,6 +52,7 @@ export default function OrphanagesPage() {
   const [errors, setErrors] = useState<
     Partial<Record<OrphanageFormField, boolean>>
   >({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [list, setList] = useState<Orphanage[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lastDoc, setLastDoc] =
@@ -65,7 +79,7 @@ export default function OrphanagesPage() {
     registrationDocUrl: "Registration Document URL",
   };
 
-  const fetchOrphanages = useCallback(async () => {
+  const fetchOrphanages = async () => {
     const baseQuery = query(collection(db, "orphanages"), limit(10));
     const paginatedQuery = lastDoc
       ? query(baseQuery, startAfter(lastDoc))
@@ -79,13 +93,25 @@ export default function OrphanagesPage() {
     setList((prev) => [...prev, ...docs]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length === 10);
-  }, [lastDoc]);
+  };
 
   useEffect(() => {
-    void (async () => {
-      await fetchOrphanages();
-    })();
-  }, [fetchOrphanages]);
+    const q = query(
+      collection(db, "orphanages"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Orphanage, "id">),
+      }));
+      setList(docs);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length === 10);
+    });
+    return unsubscribe;
+  }, []);
 
   const validateForm = () => {
     const newErrors: Partial<Record<OrphanageFormField, boolean>> = {};
@@ -102,10 +128,21 @@ export default function OrphanagesPage() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
+    const q = query(
+      collection(db, "orphanages"),
+      where("email", "==", form.email)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      setErrorMessage("An orphanage with this email already exists");
+      return;
+    }
+
     const newOrphanage: Omit<Orphanage, "id"> = {
       ...form,
       createdAt: serverTimestamp(),
       status: "Pending",
+      accountVerificationStatus: "notSetup",
     };
 
     const ref = await addDoc(collection(db, "orphanages"), newOrphanage);
@@ -118,16 +155,21 @@ export default function OrphanagesPage() {
       registrationNumber: "",
       registrationDocUrl: "",
     });
-    setList([]);
-    setLastDoc(null);
-    fetchOrphanages();
 
-    window.localStorage.setItem("emailForSignIn", form.email);
+    // clear error if successful
+    setErrorMessage(null);
+    const idToken = await auth.currentUser?.getIdToken();
 
-    await fetch(BACKEND_ENDPOINTS.inviteOrphanageAdmin, {
+    await fetch(`${BACKEND_ENDPOINTS.apiBaseUrl}/inviteOrphanageAdmin`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: form.email, orphanageId: ref.id }),
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: form.email,
+        orphanageId: ref.id,
+      }),
     });
   };
 
@@ -144,9 +186,6 @@ export default function OrphanagesPage() {
       registrationNumber: "",
       registrationDocUrl: "",
     });
-    setList([]);
-    setLastDoc(null);
-    fetchOrphanages();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,15 +201,37 @@ export default function OrphanagesPage() {
   };
 
   const handleFileUpload = async (file: File) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert("Only image or PDF files are allowed.");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      alert("File size must be under 5MB.");
+      return;
+    }
+
     setUploading(true);
-    const storageRef = ref(
-      storage,
-      `registrationDocs/${Date.now()}_${file.name}`
-    );
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    setForm((prev) => ({ ...prev, registrationDocUrl: url }));
-    setUploading(false);
+    try {
+      const storageRef = ref(
+        storage,
+        `registrationDocs/${Date.now()}_${file.name}`
+      );
+      await uploadBytes(storageRef, file);
+
+      const url = await getDownloadURL(storageRef);
+
+      setForm((prev) => ({
+        ...prev,
+        registrationDocUrl: url,
+        registrationDocMimeType: file.type, // <-- store MIME type here
+      }));
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -182,7 +243,7 @@ export default function OrphanagesPage() {
           <main className="flex-1 p-8">
             <h2 className="text-3xl font-bold mb-6">Orphanages</h2>
 
-            <div className="bg-white rounded shadow p-6 mb-8 max-w-3xl">
+            <div className="bg-white rounded shadow p-6 mb-8 max-w-4xl">
               <h3 className="text-lg font-semibold mb-4">
                 {editingId ? "Edit Orphanage" : "Add Orphanage"}
               </h3>
@@ -191,6 +252,10 @@ export default function OrphanagesPage() {
                 <p className="text-red-500 text-sm mb-4">
                   Please fill in all required fields marked with *
                 </p>
+              )}
+
+              {errorMessage && (
+                <p className="text-red-600 text-sm mb-2">{errorMessage}</p>
               )}
 
               {fields.map((field) => (
@@ -226,7 +291,7 @@ export default function OrphanagesPage() {
                       </p>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.pdf"
                         ref={fileInputRef}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -239,14 +304,33 @@ export default function OrphanagesPage() {
                 </div>
               ))}
 
+              {uploading && (
+                <p className="text-sm text-gray-500 mb-2">
+                  Uploading document…
+                </p>
+              )}
+
               {form.registrationDocUrl && (
-                <Image
-                  src={form.registrationDocUrl}
-                  alt="Registration Document"
-                  fill
-                  className="object-contain mb-4"
-                  style={{ maxHeight: "16rem" }}
-                />
+                <div className="preview-container mb-4 flex justify-center">
+                  {form.registrationDocMimeType === "application/pdf" ? (
+                    <>
+                      <PDFThumbnail
+                        url={form.registrationDocUrl}
+                        scale={0.3}
+                        className="inline-block border rounded p-1"
+                      />
+                    </>
+                  ) : (
+                    <div className="relative w-full max-w-[300px] h-32">
+                      <Image
+                        src={form.registrationDocUrl}
+                        alt="Registration Document"
+                        fill
+                        className="object-contain rounded shadow"
+                      />
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="mt-4">
@@ -260,52 +344,139 @@ export default function OrphanagesPage() {
               </div>
             </div>
 
-            <ul className="space-y-2">
+            {/* Orphanage List */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {list.map((o) => (
-                <li
+                <div
                   key={o.id}
-                  className="bg-white rounded shadow px-4 py-3 border"
+                  className="bg-white rounded shadow p-6 flex flex-col xl:flex-row items-start"
                 >
-                  <div className="font-semibold">{o.name}</div>
-                  <div className="text-sm text-gray-600">{o.email}</div>
-                  <div className="text-sm text-gray-500">{o.status}</div>
-                  {o.registrationDocUrl && (
-                    <Image
-                      src={o.registrationDocUrl}
-                      alt="Document"
-                      fill
-                      className="object-contain mt-2"
-                      style={{ maxHeight: "12rem" }}
-                    />
-                  )}
-                  <button
-                    className="text-blue-600 text-sm mt-2"
-                    onClick={() => {
-                      setEditingId(o.id);
-                      setForm({
-                        name: o.name,
-                        contactName: o.contactName,
-                        email: o.email,
-                        phone: o.phone,
-                        address: o.address,
-                        registrationNumber: o.registrationNumber,
-                        registrationDocUrl: o.registrationDocUrl || "",
-                      });
-                    }}
-                  >
-                    Edit
-                  </button>
-                </li>
-              ))}
-            </ul>
+                  {/* Left side: donor info + metrics */}
+                  <div className="flex-1 pr-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="text-xl font-semibold mb-2">{o.name}</h4>{" "}
+                      <span
+                        className={`inline-block px-2 py-1 text-xs rounded ${
+                          o.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {o.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">{o.address}</p>
+                    <div className="flex items-center gap-6 text-sm text-gray-600 mt-2">
+                      <a
+                        href={`tel:${o.phone}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <PhoneIcon className="h-4 w-4 text-gray-400" />
+                        {o.phone}
+                      </a>
+                      <a
+                        href={`mailto:${o.email}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                        {o.email}
+                      </a>
+                    </div>
+                    {/* Metrics */}
+                    <div className="mt-3 space-y-1 text-sm text-gray-700">
+                      <p>Children supported: {o.childrenCount ?? "—"}</p>
+                      <p>
+                        Last update:{" "}
+                        {o.lastUpdate
+                          ? new Date(
+                              o.lastUpdate.seconds * 1000
+                            ).toLocaleDateString()
+                          : "—"}
+                      </p>
+                      <p>
+                        Funding progress:{" "}
+                        {o.fundingProgress ? `${o.fundingProgress}%` : "—"}
+                      </p>
+                    </div>
+                    {/* Admin controls */}
+                    <div className="mt-4">
+                      <button
+                        className="text-primary hover:underline text-sm"
+                        onClick={() => {
+                          setEditingId(o.id);
+                          setForm({
+                            name: o.name,
+                            contactName: o.contactName,
+                            email: o.email,
+                            phone: o.phone,
+                            address: o.address,
+                            registrationNumber: o.registrationNumber,
+                            registrationDocUrl: o.registrationDocUrl || "",
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
 
+                  {/* Right side: thumbnail */}
+                  {o.registrationDocUrl && (
+                    <div className="w-64 h-40 flex-shrink-0">
+                      {o.registrationDocMimeType === "application/pdf" ? (
+                        <div className="text-center">
+                          <PDFThumbnail
+                            url={o.registrationDocUrl}
+                            scale={0.2}
+                            className="inline-block border rounded p-1"
+                          />
+                          <a
+                            href={o.registrationDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline text-sm mt-2 block text-center"
+                          >
+                            View full PDF
+                          </a>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="relative w-full">
+                            <Image
+                              src={o.registrationDocUrl}
+                              alt="Registration Document"
+                              className="object-contain rounded shadow w-full h-auto"
+                              width={0}
+                              height={0}
+                              sizes="100vw"
+                            />
+                          </div>
+                          <a
+                            href={o.registrationDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline text-sm mt-2 block text-center"
+                          >
+                            View full image
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Load More */}
             {hasMore && (
-              <button
-                className="mt-6 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition"
-                onClick={fetchOrphanages}
-              >
-                Load More
-              </button>
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={fetchOrphanages}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Load More
+                </button>
+              </div>
             )}
           </main>
         </div>

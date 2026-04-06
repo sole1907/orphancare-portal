@@ -1,0 +1,21 @@
+on:
+  push:
+    branches: [main]
+    paths:
+      - "landing/**"
+      - ".github/workflows/deploy-landing.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Copy brand assets into landing directory
+        run: cp public/benevovia_icon_wordmark.png public/benevovia_icon.png landing/
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Deploy landing page to Firebase Hosting
+        run: firebase deploy --only hosting:landing --project orphancare-93b41

@@ -1,0 +1,13 @@
+{
+  "hosting": [
+    {
+      "target": "portal",
+      "source": "."
+    },
+    {
+      "target": "landing",
+      "public": "landing",
+      "ignore": ["firebase.json", "**/.*"]
+    }
+  ]
+}

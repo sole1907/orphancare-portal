@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { auth } from "../lib/firebase";
 import { signOut } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import Image from "next/image";
+import { useSafeAuth } from "@/hooks/useSafeAuth";
 
 export default function Navbar() {
+  const auth = useSafeAuth();
   const [user] = useAuthState(auth);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -15,15 +17,22 @@ export default function Navbar() {
 
   return (
     <div className="flex justify-between items-center bg-primary text-white px-6 py-4 shadow-md relative">
-      <Link href="/">
-        <h1 className="text-xl font-bold">OrphanCare Admin</h1>
+      <Link href="/" className="flex items-center gap-3">
+        <Image
+          src="/benevovia_icon.png"
+          alt="Benevovia"
+          width={40}
+          height={40}
+          className="rounded"
+        />
+        <h1 className="text-xl font-bold">Benevovia</h1>
       </Link>
 
       {user && (
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded hover:bg-sky-400 transition"
+            className="flex items-center gap-2 bg-primary text-white px-3 py-2 rounded hover:bg-primary-light transition"
           >
             <div className="w-8 h-8 bg-white text-primary font-bold rounded-full flex items-center justify-center">
               {user.email?.charAt(0).toUpperCase()}

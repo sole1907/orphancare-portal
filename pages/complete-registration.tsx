@@ -5,8 +5,9 @@ import {
   updatePassword,
   isSignInWithEmailLink,
 } from "firebase/auth";
-import { auth, db } from "../lib/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function CompleteRegistration() {
   const router = useRouter();
@@ -15,13 +16,18 @@ export default function CompleteRegistration() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [step, setStep] = useState<"verify" | "setPassword">("verify");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    const storedEmail = window.localStorage.getItem("emailForSignIn");
-    if (storedEmail && isSignInWithEmailLink(auth, window.location.href)) {
-      signInWithEmailLink(auth, storedEmail, window.location.href)
+    if (!router.isReady) return;
+
+    const emailFromQuery = router.query.email as string | undefined;
+    const fullLink = `${window.location.origin}${router.asPath}`;
+
+    if (emailFromQuery && isSignInWithEmailLink(auth, fullLink)) {
+      signInWithEmailLink(auth, emailFromQuery, fullLink)
         .then(() => {
-          setEmail(storedEmail);
+          setEmail(emailFromQuery);
           setStep("setPassword");
         })
         .catch((err) => {
@@ -33,7 +39,7 @@ export default function CompleteRegistration() {
         setError("Missing email or invalid link");
       }, 0);
     }
-  }, []);
+  }, [router.isReady, router.query, router.asPath]);
 
   const isPasswordStrong = (pwd: string) => {
     return (
@@ -55,12 +61,22 @@ export default function CompleteRegistration() {
     try {
       await updatePassword(auth.currentUser!, password);
 
-      // Log registration completion
       await setDoc(doc(db, "registrations", auth.currentUser!.uid), {
         email,
         completedAt: serverTimestamp(),
         role: "orphanageAdmin",
       });
+
+      // also update orphanage status
+      if (router.query.orphanageId) {
+        await updateDoc(
+          doc(db, "orphanages", router.query.orphanageId as string),
+          {
+            status: "Active",
+            activatedAt: serverTimestamp(),
+          }
+        );
+      }
 
       setSuccess(true);
       setTimeout(() => router.push("/dashboard"), 3000);
@@ -87,13 +103,27 @@ export default function CompleteRegistration() {
             <p className="mb-2 text-sm text-gray-600">
               Set a password for your Orphanage Admin account:
             </p>
-            <input
-              type="password"
-              className="border border-gray-300 rounded px-4 py-2 w-full mb-4"
-              placeholder="Create password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="flex items-center border border-gray-300 rounded mb-4">
+              <input
+                className="px-4 py-2 w-full leading-none focus:outline-none"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="px-3 text-gray-600 flex items-center"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             <button
               className="bg-primary text-white px-4 py-2 rounded w-full"
               onClick={handlePasswordSubmit}
