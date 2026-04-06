@@ -32,4 +32,4 @@ jobs:
       - name: Enable Firebase webframeworks experiment
         run: firebase experiments:enable webframeworks
       - name: Deploy to Firebase Hosting
-        run: firebase deploy --project orphancare-93b41
+        run: firebase deploy --only hosting:portal --project orphancare-93b41

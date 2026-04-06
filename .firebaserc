@@ -3,5 +3,13 @@
     "default": "orphancare-93b41",
     "orphancare": "orphancare-93b41"
   },
+  "targets": {
+    "orphancare-93b41": {
+      "hosting": {
+        "portal": ["orphancare-93b41"],
+        "landing": ["benevovia-landing"]
+      }
+    }
+  },
   "etags": {}
 }

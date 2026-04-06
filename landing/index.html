@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benevovia — Connecting Donors with Children in Care</title>
+  <meta name="description" content="Benevovia connects compassionate donors with orphanages and children in care. Coming soon to iOS and Android." />
+  <meta property="og:title" content="Benevovia — Coming Soon" />
+  <meta property="og:description" content="Connecting compassionate donors with children in care. Download the app soon." />
+  <meta property="og:image" content="/benevovia_icon.png" />
+  <link rel="icon" href="/benevovia_icon.png" type="image/png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1a365d;
+      --primary-light: #667eea;
+      --accent: #38b2ac;
+      --accent-warm: #ecc94b;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--white);
+      color: var(--primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, #2d4a7a 40%, #4a5568 70%, #2d3748 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(56, 178, 172, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(236, 201, 75, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 680px; }
+
+    .logo-wrap { margin-bottom: 2.5rem; }
+    .logo-wrap img {
+      height: 56px;
+      width: auto;
+      filter: brightness(0) invert(1);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(56, 178, 172, 0.2);
+      border: 1px solid rgba(56, 178, 172, 0.4);
+      color: #81e6d9;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 1.75rem;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #38b2ac;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--white);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 span { color: var(--accent-warm); }
+
+    .hero p {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: rgba(255,255,255,0.78);
+      line-height: 1.7;
+      margin-bottom: 2.75rem;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── APP STORE BUTTONS ── */
+    .store-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .store-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+      color: var(--white);
+      text-decoration: none;
+      cursor: default;
+      position: relative;
+      min-width: 170px;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s;
+    }
+
+    .store-btn svg { flex-shrink: 0; opacity: 0.85; }
+
+    .store-btn-text { text-align: left; }
+    .store-btn-text .sub {
+      display: block;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .store-btn-text .main {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .soon-pill {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: var(--accent-warm);
+      color: var(--primary);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    /* ── NOTIFY ── */
+    .notify-wrap {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .notify-wrap input {
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: var(--white);
+      font-size: 0.95rem;
+      outline: none;
+      width: 260px;
+      backdrop-filter: blur(6px);
+      transition: border-color 0.2s;
+    }
+    .notify-wrap input::placeholder { color: rgba(255,255,255,0.45); }
+    .notify-wrap input:focus { border-color: var(--accent); }
+    .notify-wrap button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--white);
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .notify-wrap button:hover { background: #2c9a94; }
+    .notify-wrap button:active { transform: scale(0.97); }
+    .notify-label {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.6rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 5rem 1.5rem;
+      background: var(--gray-50);
+    }
+    .features-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .section-label {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto 3.5rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 2rem 1.75rem;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .card:hover { box-shadow: 0 8px 30px rgba(26,54,93,0.1); transform: translateY(-3px); }
+
+    .card-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+    }
+    .icon-blue  { background: rgba(102,126,234,0.12); }
+    .icon-teal  { background: rgba(56,178,172,0.12); }
+    .icon-gold  { background: rgba(236,201,75,0.15); }
+
+    .card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      font-size: 0.92rem;
+      color: var(--gray-500);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 5rem 1.5rem;
+      background: var(--white);
+    }
+    .steps {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .step {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+    .step-body h3 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 0.3rem; }
+    .step-body p { font-size: 0.92rem; color: var(--gray-500); line-height: 1.65; }
+
+    /* ── CTA BANNER ── */
+    .cta {
+      background: linear-gradient(135deg, var(--primary), #2d4a7a);
+      padding: 4.5rem 1.5rem;
+      text-align: center;
+      color: var(--white);
+    }
+    .cta h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .cta p {
+      color: rgba(255,255,255,0.75);
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+      max-width: 460px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--primary);
+      color: rgba(255,255,255,0.6);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    footer img {
+      height: 28px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.7;
+      margin-bottom: 0.75rem;
+    }
+    footer a {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      margin: 0 0.75rem;
+    }
+    footer a:hover { color: rgba(255,255,255,0.9); }
+    .footer-links { margin: 0.75rem 0; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 500px) {
+      .store-buttons { flex-direction: column; align-items: center; }
+      .notify-wrap input { width: 100%; }
+      .step { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+
+      <div class="logo-wrap">
+        <img src="/benevovia_icon_wordmark.png" alt="Benevovia" />
+      </div>
+
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Coming Soon
+      </div>
+
+      <h1>Give with purpose.<br /><span>Change a child's life.</span></h1>
+
+      <p>
+        Benevovia connects compassionate donors directly with verified orphanages
+        and children in care — making every donation transparent, traceable, and meaningful.
+      </p>
+
+      <div class="store-buttons">
+        <a class="store-btn" aria-label="Download on the App Store (Coming Soon)">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+          <div class="store-btn-text">
+            <span class="sub">Download on the</span>
+            <span class="main">App Store</span>
+          </div>
+          <span class="soon-pill">Soon</span>
+        </a>
+
+        <a class="store-btn" aria-label="Get it on Google Play (Coming Soon)">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.18 23.76c.35.2.76.22 1.15.08L16.6 12 12.37 7.77 3.18 23.76zm16.7-13.03L17.3 9.4 12.86 12l4.44 2.6 1.56-.9c.78-.45 1.14-1.04 1.14-1.69s-.36-1.24-1.12-1.68zM3.69.2C3.3.07 2.88.1 2.54.31 1.85.76 1.5 1.53 1.5 2.58v18.84c0 1.05.35 1.82 1.04 2.27.34.21.76.24 1.15.09L14.12 12 3.69.2zm9.88 12.64L5.32 21.2 3.54 2.79l10.03 10.05z"/>
+          </svg>
+          <div class="store-btn-text">
+            <span class="sub">Get it on</span>
+            <span class="main">Google Play</span>
+          </div>
+          <span class="soon-pill">Soon</span>
+        </a>
+      </div>
+
+      <div class="notify-wrap">
+        <input type="email" placeholder="Enter your email for early access" />
+        <button type="button">Notify Me</button>
+        <span class="notify-label">No spam, ever. We'll only reach out when the app launches.</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="features-inner">
+      <p class="section-label">Why Benevovia</p>
+      <h2 class="section-title">Every child deserves to be seen</h2>
+      <p class="section-sub">
+        We built Benevovia to bridge the gap between those who want to give
+        and the children who need it most.
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon icon-blue">🔍</div>
+          <h3>Verified Orphanages</h3>
+          <p>Every orphanage on the platform goes through a thorough verification process so your donations reach the right hands.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-teal">💚</div>
+          <h3>Child Profiles</h3>
+          <p>Browse real profiles of children in care — their interests, needs, and stories — and give directly to who you want to support.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-gold">📊</div>
+          <h3>Transparent Giving</h3>
+          <p>Track exactly where your donation goes with full transparency reports and updates from the orphanages you support.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-blue">📱</div>
+          <h3>Mobile First</h3>
+          <p>A beautifully simple app experience designed to make giving as easy as possible — anytime, anywhere.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-teal">🏛️</div>
+          <h3>Admin Portal</h3>
+          <p>Orphanage administrators get a powerful dashboard to manage children, donations, and donor relationships in one place.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon icon-gold">🔐</div>
+          <h3>Secure Payments</h3>
+          <p>Industry-standard payment processing ensures your financial information and transactions are always protected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how">
+    <div class="features-inner">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">Simple, meaningful giving</h2>
+      <p class="section-sub">From download to donation in just a few steps.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Download the app</h3>
+            <p>Available soon on iOS and Android. Create your free donor account in under a minute.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Discover children & orphanages</h3>
+            <p>Browse verified orphanages and read the stories of children in care. Filter by location, age, or specific needs.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Make a donation</h3>
+            <p>Give a one-time gift or set up recurring support. Every contribution, large or small, makes a difference.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>See the impact</h3>
+            <p>Receive updates from the orphanages you support and see firsthand how your generosity is changing lives.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="cta">
+    <h2>Be among the first to give.</h2>
+    <p>Join our waiting list and get early access when we launch on iOS and Android.</p>
+    <div class="notify-wrap" style="justify-content:center;">
+      <input type="email" placeholder="Your email address" />
+      <button type="button">Get Early Access</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <img src="/benevovia_icon_wordmark.png" alt="Benevovia" />
+    </div>
+    <div class="footer-links">
+      <a href="mailto:hello@benevovia.com">Contact</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+    <p>&copy; 2025 Benevovia. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
