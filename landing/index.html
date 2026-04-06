@@ -103,11 +103,22 @@
 
       .logo-wrap {
         margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
       }
       .logo-wrap img {
-        height: 160px;
+        height: 320px;
         width: auto;
-        max-width: 90vw;
+        max-width: 40vw;
+      }
+      .logo-wordmark {
+        font-size: clamp(4.5rem, 13vw, 10rem);
+        font-weight: 900;
+        color: var(--white);
+        letter-spacing: -0.02em;
+        line-height: 1;
       }
 
       .badge {
@@ -504,7 +515,8 @@
     <section class="hero">
       <div class="hero-content">
         <div class="logo-wrap">
-          <img src="/benevovia_icon_wordmark.png" alt="Benevovia" />
+          <img src="/benevovia_icon.png" alt="Benevovia icon" />
+          <span class="logo-wordmark">benevovia</span>
         </div>
 
         <div class="badge">
